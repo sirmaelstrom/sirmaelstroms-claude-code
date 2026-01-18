@@ -1,0 +1,31 @@
+{
+  ".claude-plugin/plugin.json": {
+    "valid": false,
+    "errors": [
+      "Command 0: path does not exist: .claude/commands/git/commit-push-pr.md",
+      "Command 1: path does not exist: .claude/commands/dotnet/build-test.md",
+      "Command 2: path does not exist: .claude/commands/dotnet/new-project.md",
+      "Command 3: path does not exist: .claude/commands/dotnet/add-package.md",
+      "Command 4: path does not exist: .claude/commands/general/code-explain.md",
+      "Command 5: path does not exist: .claude/commands/general/docs-generate.md",
+      "Command 6: path does not exist: .claude/commands/general/lint.md",
+      "Command 7: path does not exist: .claude/commands/general/code-optimize.md",
+      "Command 8: path does not exist: .claude/commands/general/code-cleanup.md",
+      "Agent 0: path does not exist: .claude/agents/quality/code-simplifier.md",
+      "Agent 1: path does not exist: .claude/agents/quality/verify-app.md",
+      "Agent 2: path does not exist: .claude/agents/quality/adversarial-reviewer.md",
+      "Agent 3: path does not exist: .claude/agents/dotnet/dotnet-architect.md",
+      "Agent 4: path does not exist: .claude/agents/dotnet/dotnet-performance.md",
+      "Agent 5: path does not exist: .claude/agents/general/tech-stack-researcher.md",
+      "Agent 6: path does not exist: .claude/agents/general/deep-research-agent.md",
+      "Agent 7: path does not exist: .claude/agents/general/technical-writer.md",
+      "Agent 8: path does not exist: .claude/agents/general/security-engineer.md"
+    ]
+  },
+  ".claude-plugin/marketplace.json": {
+    "valid": false,
+    "errors": [
+      "Missing required field: marketplaceName"
+    ]
+  }
+}
