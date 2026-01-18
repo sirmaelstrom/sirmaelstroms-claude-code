@@ -1,0 +1,101 @@
+{
+  "name": "sirm-claude-toolbox",
+  "version": "1.0.0",
+  "description": "Custom .NET/C#/PowerShell-focused Claude Code toolbox",
+  "author": "sirmaelstrom",
+  "tags": ["dotnet", "csharp", "powershell", "sql", "quality", "git", "architecture", "security"],
+  "commands": [
+    {
+      "name": "commit-push-pr",
+      "path": ".claude/commands/git/commit-push-pr.md",
+      "description": "Commit changes, push to remote, and create PR"
+    },
+    {
+      "name": "build-test",
+      "path": ".claude/commands/dotnet/build-test.md",
+      "description": "Build and test .NET solution/project with error reporting"
+    },
+    {
+      "name": "new-project",
+      "path": ".claude/commands/dotnet/new-project.md",
+      "description": "Scaffold new .NET project with template selection"
+    },
+    {
+      "name": "add-package",
+      "path": ".claude/commands/dotnet/add-package.md",
+      "description": "Search and add NuGet packages to .NET project"
+    },
+    {
+      "name": "code-explain",
+      "path": ".claude/commands/general/code-explain.md",
+      "description": "Generate detailed explanations of code structure, logic, and patterns"
+    },
+    {
+      "name": "docs-generate",
+      "path": ".claude/commands/general/docs-generate.md",
+      "description": "Generate comprehensive documentation for code, APIs, and projects"
+    },
+    {
+      "name": "lint",
+      "path": ".claude/commands/general/lint.md",
+      "description": "Run appropriate linters and fix code quality issues"
+    },
+    {
+      "name": "code-optimize",
+      "path": ".claude/commands/general/code-optimize.md",
+      "description": "Analyze and optimize code for performance, memory, and efficiency"
+    },
+    {
+      "name": "code-cleanup",
+      "path": ".claude/commands/general/code-cleanup.md",
+      "description": "Refactor and clean up code for better readability and maintainability"
+    }
+  ],
+  "agents": [
+    {
+      "name": "code-simplifier",
+      "path": ".claude/agents/quality/code-simplifier.md",
+      "description": "Reduce complexity and eliminate unnecessary abstractions after feature implementation"
+    },
+    {
+      "name": "verify-app",
+      "path": ".claude/agents/quality/verify-app.md",
+      "description": "Systematically verify application functionality through builds, tests, and validation"
+    },
+    {
+      "name": "adversarial-reviewer",
+      "path": ".claude/agents/quality/adversarial-reviewer.md",
+      "description": "Challenge assumptions and identify failure modes through devil's advocate analysis"
+    },
+    {
+      "name": "dotnet-architect",
+      "path": ".claude/agents/dotnet/dotnet-architect.md",
+      "description": "Design clean, maintainable .NET systems following DDD, Clean Architecture, and SOLID principles"
+    },
+    {
+      "name": "dotnet-performance",
+      "path": ".claude/agents/dotnet/dotnet-performance.md",
+      "description": "Optimize .NET applications through measurement-driven improvements and evidence-based tuning"
+    },
+    {
+      "name": "tech-stack-researcher",
+      "path": ".claude/agents/general/tech-stack-researcher.md",
+      "description": "Research technology choices and provide evidence-based recommendations for architecture decisions"
+    },
+    {
+      "name": "deep-research-agent",
+      "path": ".claude/agents/general/deep-research-agent.md",
+      "description": "Conduct comprehensive technical research with multi-hop reasoning and intelligent synthesis"
+    },
+    {
+      "name": "technical-writer",
+      "path": ".claude/agents/general/technical-writer.md",
+      "description": "Create clear, accessible, and audience-focused technical documentation"
+    },
+    {
+      "name": "security-engineer",
+      "path": ".claude/agents/general/security-engineer.md",
+      "description": "Identify vulnerabilities and implement security hardening with zero-trust mindset"
+    }
+  ]
+}

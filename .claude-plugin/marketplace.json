@@ -1,0 +1,24 @@
+{
+  "name": "sirm-toolbox-marketplace",
+  "displayName": "Sirm's Claude Code Toolbox",
+  "description": "Personal marketplace for .NET/C#/PowerShell-focused Claude Code plugins",
+  "author": "sirmaelstrom",
+  "plugins": [
+    {
+      "id": "sirm-claude-toolbox",
+      "name": "Sirm Claude Toolbox",
+      "description": "Custom .NET/C#/PowerShell-focused Claude Code toolbox with slash commands, agents, and automation",
+      "author": "sirmaelstrom",
+      "version": "1.0.0",
+      "tags": ["dotnet", "csharp", "powershell", "sql", "quality", "git", "architecture", "security"],
+      "source": {
+        "type": "directory",
+        "path": "."
+      },
+      "commands": 9,
+      "agents": 9,
+      "readme": ".claude-plugin/README.md",
+      "changelog": "CHANGELOG.md"
+    }
+  ]
+}
