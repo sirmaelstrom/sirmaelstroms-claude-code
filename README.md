@@ -195,14 +195,19 @@ This is a personal toolbox, but suggestions and improvements are welcome:
 ## Roadmap
 
 **v1.1 - PowerShell & SQL:**
-- PowerShell AD/Exchange helpers
-- SQL migration and optimization tools
+- PowerShell AD/Exchange helper commands
+- SQL Server migration and optimization tools
 - Database documentation generation
 
 **v1.2 - MCP Integrations:**
 - Error log analysis MCP server
 - Analytics integration
 - GitHub action installation via slash command
+
+**v1.3 - Enhanced Hooks:**
+- PostBuild hook with Discord status
+- PostTest hook with test details
+- PreCommit validation hook
 
 **v2.0 - Marketplace:**
 - Publish to official Claude Code marketplace
