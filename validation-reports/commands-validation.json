@@ -28,15 +28,11 @@
     "errors": []
   },
   "commands/dotnet/add-package.md": {
-    "valid": false,
-    "errors": [
-      "YAML parse error: while parsing a block mapping\n  in \"<unicode string>\", line 2, column 1:\n    description: Search and add NuGe ... \n    ^\nexpected <block end>, but found '['\n  in \"<unicode string>\", line 3, column 31:\n    argument-hint: [package-name] [version]\n                                  ^"
-    ]
+    "valid": true,
+    "errors": []
   },
   "commands/dotnet/new-project.md": {
-    "valid": false,
-    "errors": [
-      "YAML parse error: while parsing a block mapping\n  in \"<unicode string>\", line 2, column 1:\n    description: Scaffold new .NET p ... \n    ^\nexpected <block end>, but found '['\n  in \"<unicode string>\", line 3, column 32:\n    argument-hint: [template-name] [project-name]\n                                   ^"
-    ]
+    "valid": true,
+    "errors": []
   }
 }
