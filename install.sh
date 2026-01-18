@@ -6,8 +6,8 @@ echo "Installing sirmaelstroms-claude-code..."
 # Get absolute path to repo
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Ensure we're in a git repo
-if [ ! -d "$REPO_DIR/.git" ]; then
+# Ensure we're in a git repo (handles both normal repos and worktrees)
+if [ ! -d "$REPO_DIR/.git" ] && [ ! -f "$REPO_DIR/.git" ]; then
     echo "Error: Must run from git repository root"
     exit 1
 fi
@@ -31,8 +31,8 @@ mkdir -p ~/.claude
 
 # Symlink commands and agents
 echo "Creating symlinks..."
-ln -sf "$REPO_DIR/.claude/commands" ~/.claude/commands
-ln -sf "$REPO_DIR/.claude/agents" ~/.claude/agents
+ln -sf "$REPO_DIR/commands" ~/.claude/commands
+ln -sf "$REPO_DIR/agents" ~/.claude/agents
 
 # Copy hooks (scripts need to be executable and may be customized)
 echo "Installing hooks..."
@@ -50,8 +50,8 @@ echo ""
 echo "✓ Installation complete!"
 echo ""
 echo "Installed:"
-echo "  Commands: ~/.claude/commands -> $REPO_DIR/.claude/commands"
-echo "  Agents: ~/.claude/agents -> $REPO_DIR/.claude/agents"
+echo "  Commands: ~/.claude/commands -> $REPO_DIR/commands"
+echo "  Agents: ~/.claude/agents -> $REPO_DIR/agents"
 echo "  Hooks: ~/.claude/hooks/ (copied)"
 echo ""
 echo "See QUICKSTART.md for next steps"
