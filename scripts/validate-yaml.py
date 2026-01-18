@@ -4,81 +4,69 @@ import yaml
 import json
 from pathlib import Path
 
-def validate_command_yaml(file_path):
-    """Validate YAML frontmatter in command file."""
+# Module-level constants
+VALID_MODELS = ['claude-sonnet-4-5-20250929', 'claude-sonnet-4-5', 'sonnet']
+VALID_COLORS = ['red', 'blue', 'green', 'yellow', 'orange', 'purple', 'cyan', 'teal', 'pink']
+
+def extract_and_parse_frontmatter(file_path):
+    """Extract and parse YAML frontmatter. Returns (frontmatter_dict, errors_list)."""
     errors = []
 
     with open(file_path, 'r') as f:
         content = f.read()
 
-    # Check for YAML frontmatter
     if not content.startswith('---'):
-        errors.append(f"Missing YAML frontmatter")
-        return errors
+        errors.append("Missing YAML frontmatter")
+        return None, errors
 
-    # Extract frontmatter
     parts = content.split('---', 2)
     if len(parts) < 3:
-        errors.append(f"Invalid YAML frontmatter structure")
-        return errors
+        errors.append("Invalid YAML frontmatter structure")
+        return None, errors
 
-    # Parse YAML
     try:
         frontmatter = yaml.safe_load(parts[1])
     except yaml.YAMLError as e:
         errors.append(f"YAML parse error: {e}")
+        return None, errors
+
+    return frontmatter, errors
+
+def validate_command_yaml(file_path):
+    """Validate YAML frontmatter in command file."""
+    frontmatter, errors = extract_and_parse_frontmatter(file_path)
+    if errors:
         return errors
 
-    # Validate required fields
-    required_fields = ['description']
-    for field in required_fields:
-        if field not in frontmatter:
-            errors.append(f"Missing required field: {field}")
+    # Check required fields
+    if 'description' not in frontmatter:
+        errors.append("Missing required field: description")
 
-    # Validate optional fields
-    if 'model' in frontmatter:
-        valid_models = ['claude-sonnet-4-5-20250929', 'claude-sonnet-4-5', 'sonnet']
-        if frontmatter['model'] not in valid_models:
-            errors.append(f"Invalid model: {frontmatter['model']}")
+    # Validate model if present
+    if 'model' in frontmatter and frontmatter['model'] not in VALID_MODELS:
+        errors.append(f"Invalid model: {frontmatter['model']}")
 
     return errors
 
 def validate_agent_yaml(file_path):
     """Validate YAML frontmatter in agent file."""
-    errors = []
-
-    with open(file_path, 'r') as f:
-        content = f.read()
-
-    # Check for YAML frontmatter
-    if not content.startswith('---'):
-        errors.append(f"Missing YAML frontmatter")
+    frontmatter, errors = extract_and_parse_frontmatter(file_path)
+    if errors:
         return errors
 
-    # Extract frontmatter
-    parts = content.split('---', 2)
-    if len(parts) < 3:
-        errors.append(f"Invalid YAML frontmatter structure")
-        return errors
-
-    # Parse YAML
-    try:
-        frontmatter = yaml.safe_load(parts[1])
-    except yaml.YAMLError as e:
-        errors.append(f"YAML parse error: {e}")
-        return errors
-
-    # Validate required fields
+    # Check required fields
     required_fields = ['name', 'description', 'model']
     for field in required_fields:
         if field not in frontmatter:
             errors.append(f"Missing required field: {field}")
 
-    # Validate color field
-    if 'color' in frontmatter:
-        valid_colors = ['red', 'blue', 'green', 'yellow', 'orange', 'purple', 'cyan', 'teal', 'pink']
-        if frontmatter['color'] not in valid_colors:
-            errors.append(f"Invalid color: {frontmatter['color']}")
+    # Validate model value
+    if 'model' in frontmatter and frontmatter['model'] not in VALID_MODELS:
+        errors.append(f"Invalid model: {frontmatter['model']}")
+
+    # Validate color if present
+    if 'color' in frontmatter and frontmatter['color'] not in VALID_COLORS:
+        errors.append(f"Invalid color: {frontmatter['color']}")
 
     return errors
 
