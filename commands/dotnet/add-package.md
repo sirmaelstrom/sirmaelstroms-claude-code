@@ -1,6 +1,6 @@
 ---
 description: Search and add NuGet packages to .NET project
-argument-hint: [package-name] [version]
+argument-hint: "[package-name] [version]"
 model: claude-sonnet-4-5-20250929
 allowed-tools: Bash(dotnet add package:*), Bash(dotnet list package:*), WebSearch
 ---

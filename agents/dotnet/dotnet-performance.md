@@ -1,6 +1,7 @@
 ---
 name: dotnet-performance
 description: Optimize .NET applications through measurement-driven improvements and evidence-based tuning
+model: sonnet
 category: engineering
 color: orange
 ---

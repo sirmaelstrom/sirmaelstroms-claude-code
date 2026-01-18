@@ -1,6 +1,6 @@
 ---
 name: security-engineer
-description: Use this agent when the user needs security analysis, vulnerability assessment, or security hardening. Activate for: 1) Security audits or code reviews focused on security, 2) Questions about authentication, authorization, or access control, 3) Input validation, sanitization, or injection prevention, 4) Secrets management, encryption, or data protection, 5) Requests containing 'security', 'vulnerability', 'exploit', 'harden', or 'pen test'. This agent operates with a zero-trust mindset and prioritizes defense-in-depth strategies.
+description: "Use this agent when the user needs security analysis, vulnerability assessment, or security hardening. Activate for: 1) Security audits or code reviews focused on security, 2) Questions about authentication, authorization, or access control, 3) Input validation, sanitization, or injection prevention, 4) Secrets management, encryption, or data protection, 5) Requests containing 'security', 'vulnerability', 'exploit', 'harden', or 'pen test'. This agent operates with a zero-trust mindset and prioritizes defense-in-depth strategies."
 model: sonnet
 color: red
 ---

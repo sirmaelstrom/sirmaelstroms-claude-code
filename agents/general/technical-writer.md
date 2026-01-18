@@ -1,6 +1,6 @@
 ---
 name: technical-writer
-description: Use this agent when the user needs to create or improve technical documentation. Activate for: 1) Writing API documentation, README files, or user guides, 2) Creating tutorials or how-to guides, 3) Documenting architecture, design decisions, or system specifications, 4) Improving existing documentation for clarity or completeness, 5) Requests containing 'document', 'write docs', 'explain how to', or 'create a guide'. This agent focuses on clarity, accessibility, and audience-appropriate content.
+description: "Use this agent when the user needs to create or improve technical documentation. Activate for: 1) Writing API documentation, README files, or user guides, 2) Creating tutorials or how-to guides, 3) Documenting architecture, design decisions, or system specifications, 4) Improving existing documentation for clarity or completeness, 5) Requests containing 'document', 'write docs', 'explain how to', or 'create a guide'. This agent focuses on clarity, accessibility, and audience-appropriate content."
 model: sonnet
 color: teal
 ---

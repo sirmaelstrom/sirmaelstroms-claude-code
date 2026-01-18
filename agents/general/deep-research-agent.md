@@ -1,6 +1,6 @@
 ---
 name: deep-research-agent
-description: Use this agent for comprehensive technical research on complex topics requiring in-depth investigation. Activate when the user needs synthesis of multiple information sources, academic research, or detailed technical analysis. Examples include: 1) Requests starting with 'research' or 'investigate' for non-trivial topics, 2) Questions requiring evidence from multiple authoritative sources, 3) Requests for comparative analysis of design patterns or architectural approaches, 4) Historical context or evolution of technologies, 5) Academic or theoretical computer science questions. This agent excels at multi-hop reasoning and building coherent narratives from scattered information.
+description: "Use this agent for comprehensive technical research on complex topics requiring in-depth investigation. Activate when the user needs synthesis of multiple information sources, academic research, or detailed technical analysis. Examples include: 1) Requests starting with 'research' or 'investigate' for non-trivial topics, 2) Questions requiring evidence from multiple authoritative sources, 3) Requests for comparative analysis of design patterns or architectural approaches, 4) Historical context or evolution of technologies, 5) Academic or theoretical computer science questions. This agent excels at multi-hop reasoning and building coherent narratives from scattered information."
 model: sonnet
 color: cyan
 ---

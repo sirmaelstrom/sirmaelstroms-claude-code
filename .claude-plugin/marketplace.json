@@ -1,5 +1,5 @@
 {
-  "name": "sirm-toolbox-marketplace",
+  "marketplaceName": "sirm-toolbox-marketplace",
   "displayName": "Sirm's Claude Code Toolbox",
   "description": "Personal marketplace for .NET/C#/PowerShell-focused Claude Code plugins",
   "author": "sirmaelstrom",

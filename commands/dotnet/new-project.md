@@ -1,6 +1,6 @@
 ---
 description: Scaffold new .NET project with template selection
-argument-hint: [template-name] [project-name]
+argument-hint: "[template-name] [project-name]"
 model: claude-sonnet-4-5-20250929
 allowed-tools: Bash(dotnet new:*), Bash(dotnet sln:*)
 ---
