@@ -323,11 +323,6 @@ This is a personal plugin collection, but suggestions and improvements are welco
 - PostTest hook with test details
 - PreCommit validation hook
 
-**v2.0 - Marketplace:**
-- Publish to official Claude Code marketplace
-- One-command installation
-- Automatic updates
-
 ## License
 
 MIT License - Copyright (c) 2026 sirmaelstrom
