@@ -547,7 +547,7 @@ Working on two related projects simultaneously (plans + toolkit) using Superpowe
 
 ## Superpowers Plugin Workflow
 
-The [Superpowers plugin](https://github.com/superpowered-ai/superpowers-for-claude-code) has proven exceptionally valuable in the development workflow.
+The [Superpowers plugin](https://github.com/obra/superpowers) by Jesse Vincent has proven exceptionally valuable in the development workflow.
 
 ### Workflow Pattern
 
@@ -594,7 +594,7 @@ Future learnings should be measurement-driven:
 ## Resources
 
 ### Community
-- [Superpowers for Claude Code](https://github.com/superpowered-ai/superpowers-for-claude-code)
+- [Superpowers for Claude Code](https://github.com/obra/superpowers) - by Jesse Vincent
 - [Claude Code Discord](https://discord.gg/claude-code)
 
 ### Performance

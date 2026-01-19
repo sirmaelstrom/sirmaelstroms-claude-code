@@ -334,4 +334,5 @@ Created by **sirmaelstrom**.
 ## Acknowledgments
 
 - Inspired by [edmunds-claude-code](https://github.com/edmund-io/edmunds-claude-code)
+- Development workflow powered by [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent
 - Built for [Claude Code](https://claude.ai/code) by Anthropic
