@@ -1,0 +1,38 @@
+{
+  "agents/quality/adversarial-reviewer.md": {
+    "valid": true,
+    "errors": []
+  },
+  "agents/quality/verify-app.md": {
+    "valid": true,
+    "errors": []
+  },
+  "agents/quality/code-simplifier.md": {
+    "valid": true,
+    "errors": []
+  },
+  "agents/general/security-engineer.md": {
+    "valid": true,
+    "errors": []
+  },
+  "agents/general/technical-writer.md": {
+    "valid": true,
+    "errors": []
+  },
+  "agents/general/tech-stack-researcher.md": {
+    "valid": true,
+    "errors": []
+  },
+  "agents/general/deep-research-agent.md": {
+    "valid": true,
+    "errors": []
+  },
+  "agents/dotnet/dotnet-performance.md": {
+    "valid": true,
+    "errors": []
+  },
+  "agents/dotnet/dotnet-architect.md": {
+    "valid": true,
+    "errors": []
+  }
+}

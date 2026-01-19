@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "comment": "Initialize session tracking",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/.claude/hooks/init-session.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}
+

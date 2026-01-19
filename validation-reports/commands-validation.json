@@ -1,0 +1,38 @@
+{
+  "commands/git/commit-push-pr.md": {
+    "valid": true,
+    "errors": []
+  },
+  "commands/general/code-cleanup.md": {
+    "valid": true,
+    "errors": []
+  },
+  "commands/general/lint.md": {
+    "valid": true,
+    "errors": []
+  },
+  "commands/general/docs-generate.md": {
+    "valid": true,
+    "errors": []
+  },
+  "commands/general/code-optimize.md": {
+    "valid": true,
+    "errors": []
+  },
+  "commands/general/code-explain.md": {
+    "valid": true,
+    "errors": []
+  },
+  "commands/dotnet/build-test.md": {
+    "valid": true,
+    "errors": []
+  },
+  "commands/dotnet/add-package.md": {
+    "valid": true,
+    "errors": []
+  },
+  "commands/dotnet/new-project.md": {
+    "valid": true,
+    "errors": []
+  }
+}

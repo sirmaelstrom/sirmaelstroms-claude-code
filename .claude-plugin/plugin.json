@@ -1,0 +1,13 @@
+{
+  "name": "sirmaelstroms-claude-code",
+  "version": "1.0.0",
+  "description": "Custom .NET/C#/PowerShell-focused Claude Code plugin collection with slash commands, agents, and automation",
+  "author": {
+    "name": "sirmaelstrom",
+    "email": "[email protected]"
+  },
+  "homepage": "https://github.com/sirmaelstrom/sirmaelstroms-claude-code",
+  "repository": "https://github.com/sirmaelstrom/sirmaelstroms-claude-code",
+  "license": "MIT",
+  "keywords": ["dotnet", "csharp", "powershell", "sql", "quality", "git", "architecture", "security"]
+}

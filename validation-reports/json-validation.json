@@ -1,0 +1,10 @@
+{
+  ".claude-plugin/plugin.json": {
+    "valid": true,
+    "errors": []
+  },
+  ".claude-plugin/marketplace.json": {
+    "valid": true,
+    "errors": []
+  }
+}
