@@ -1,6 +1,6 @@
 {
   "name": "sirmaelstroms-claude-code",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Custom .NET/C#/PowerShell-focused Claude Code plugin collection with slash commands, agents, and automation",
   "author": {
     "name": "sirmaelstrom",
