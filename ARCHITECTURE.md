@@ -608,6 +608,37 @@ Claude continues execution
 - **Claude-optimized**: Claude excels at following markdown instructions
 - **Versionable**: Standard text files in git
 
+### Why Externalize Complex Validation?
+
+**Problem**: Multi-line bash validation scripts in command markdown files trigger permission prompts because Claude Code's permission system doesn't match complex inline bash logic.
+
+**Solution**: Extract validation logic into standalone scripts in `scripts/` directory.
+
+**Example**: `validate-tasks.sh` for `/sync-tasks` command
+- **Previous**: ~90 lines of inline bash security checks in sync-tasks.md
+- **Now**: Single script call with JSON output
+- **Permission**: One wildcard rule: `Bash(*sirmaelstroms-claude-code*/scripts/validate-tasks.sh*)`
+
+**Benefits**:
+- **Permission handling**: Single permission rule instead of dozens of brittle patterns
+- **Testability**: Validation logic can be tested in isolation (`tests/test-validate-tasks.sh`)
+- **Maintainability**: Changes to validation in one place, not embedded in commands
+- **Reusability**: Other commands can use the same validation script
+- **Portability**: Works regardless of plugin installation location (marketplace cache vs local)
+
+**Pattern**:
+1. Create validation script in `scripts/`
+2. Add comprehensive test suite in `tests/`
+3. Command calls script with `find ~/.claude/plugins -name "script-name.sh"`
+4. Parse JSON output (jq if available, grep fallback)
+5. Handle exit codes (0=success, 1=warnings, 2=critical)
+
+**When to use**:
+- Multi-line bash logic that requires permission prompts
+- Security-critical validation that needs thorough testing
+- Logic that might be reused across multiple commands
+- Platform-specific commands (macOS vs Linux stat syntax, etc.)
+
 ## Extending the Plugin
 
 ### Adding a New Command

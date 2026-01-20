@@ -38,129 +38,93 @@ The sync-tasks command uses the **current working directory** as the base:
 
 ### Pre-Execution Validation
 
-**1. Verify TASKS.md exists and is safe:**
+**Execute validation script to check TASKS.md and discover/validate TODO.md files:**
+
 ```bash
-# CRITICAL: TASKS.md must exist in current working directory
-if [[ ! -f "TASKS.md" ]]; then
-    echo "ERROR: TASKS.md not found in current directory"
-    echo "Please create TASKS.md first or run from correct directory"
+# Locate validate-tasks.sh (handles marketplace or local installation)
+SCRIPT_PATH=$(find ~/.claude/plugins -name "validate-tasks.sh" \
+  -path "*/sirmaelstroms-claude-code/*" -type f 2>/dev/null | head -1)
+
+if [[ -z "$SCRIPT_PATH" ]]; then
+    echo "ERROR: validate-tasks.sh not found in plugin installation"
+    echo "Please ensure sirmaelstroms-claude-code plugin is properly installed"
     exit 1
 fi
 
-# CRITICAL: TASKS.md must not be a symlink
-if [[ -L "TASKS.md" ]]; then
-    echo "SECURITY VIOLATION: TASKS.md is a symlink (not allowed)"
-    echo "Symlinks to TASKS.md are blocked to prevent arbitrary file overwrites"
+# Run validation and capture output
+VALIDATION_OUTPUT=$("$SCRIPT_PATH" --working-dir "." 2>&1)
+VALIDATION_EXIT=$?
+
+# Parse JSON output
+if command -v jq &>/dev/null; then
+    # Use jq for robust JSON parsing
+    STATUS=$(echo "$VALIDATION_OUTPUT" | jq -r '.status')
+    VALIDATED_FILES=$(echo "$VALIDATION_OUTPUT" | jq -r '.todo_files.files[] | select(.status=="valid") | .path')
+    ERRORS=$(echo "$VALIDATION_OUTPUT" | jq -r '.errors[]' 2>/dev/null)
+    WARNINGS=$(echo "$VALIDATION_OUTPUT" | jq -r '.warnings[]' 2>/dev/null)
+else
+    # Fallback: simple grep parsing if jq not available
+    STATUS=$(echo "$VALIDATION_OUTPUT" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
+    # For file paths, this is less reliable without jq, but workable
+    VALIDATED_FILES=$(echo "$VALIDATION_OUTPUT" | grep '"status":"valid"' | grep -o '"path":"[^"]*"' | cut -d'"' -f4)
+fi
+
+# Handle validation results
+if [[ $VALIDATION_EXIT -eq 2 ]]; then
+    echo "========================================="
+    echo "CRITICAL ERROR: Cannot proceed with sync"
+    echo "========================================="
+    echo ""
+    echo "$VALIDATION_OUTPUT" | jq '.' 2>/dev/null || echo "$VALIDATION_OUTPUT"
+    echo ""
+    echo "Please fix the errors above and try again."
     exit 1
+elif [[ $VALIDATION_EXIT -eq 1 ]]; then
+    echo "========================================="
+    echo "WARNING: Some files rejected during validation"
+    echo "========================================="
+    echo ""
+    if [[ -n "$ERRORS" ]]; then
+        echo "Errors:"
+        echo "$ERRORS"
+        echo ""
+    fi
+    if [[ -n "$WARNINGS" ]]; then
+        echo "Warnings:"
+        echo "$WARNINGS"
+        echo ""
+    fi
+    echo "Proceeding with validated subset of files..."
+    echo ""
 fi
 
-# Verify TASKS.md is in current directory (no parent paths)
-if [[ "$(dirname "TASKS.md")" != "." ]]; then
-    echo "ERROR: TASKS.md must be in current working directory"
-    exit 1
-fi
+# Convert validated files to array
+mapfile -t VALIDATED_TODO_FILES <<< "$VALIDATED_FILES"
+
+echo "Validation complete: ${#VALIDATED_TODO_FILES[@]} TODO.md files validated"
+echo ""
 ```
 
-**2. File Discovery Security (validate EACH discovered TODO.md):**
-```bash
-total_size=0
-for todo_file in "${discovered_files[@]}"; do
-    # SECURITY: Reject symlinks (TOCTOU-aware - check early)
-    if [[ -L "$todo_file" ]]; then
-        echo "SECURITY WARNING: Skipping $todo_file (symlink not allowed)"
-        continue
-    fi
-
-    # SECURITY: Verify it's a regular file (must be file before path checks)
-    if [[ ! -f "$todo_file" ]]; then
-        echo "WARNING: Skipping $todo_file (not a regular file)"
-        continue
-    fi
-
-    # SECURITY: Verify file is within workspace (both must use realpath or both fail)
-    realpath_file=$(realpath "$todo_file" 2>/dev/null)
-    realpath_cwd=$(realpath "." 2>/dev/null)
-
-    if [[ -z "$realpath_file" ]] || [[ -z "$realpath_cwd" ]]; then
-        echo "WARNING: Skipping $todo_file (path resolution failed)"
-        continue
-    fi
-
-    if [[ "$realpath_file" != "$realpath_cwd"/* ]]; then
-        echo "SECURITY WARNING: Skipping $todo_file (outside workspace)"
-        continue
-    fi
-
-    # SECURITY: Check file size (prevent DoS, portable stat command)
-    if [[ "$(uname)" == "Darwin" ]]; then
-        size=$(stat -f %z "$todo_file" 2>/dev/null)
-    else
-        size=$(stat -c %s "$todo_file" 2>/dev/null)
-    fi
-
-    if [[ -z "$size" ]] || [[ ! "$size" =~ ^[0-9]+$ ]]; then
-        echo "WARNING: Skipping $todo_file (cannot determine file size)"
-        continue
-    fi
-
-    if (( size > 102400 )); then
-        echo "WARNING: Skipping $todo_file (>100KB, TODO.md should be small)"
-        continue
-    fi
-
-    # SECURITY: Check total cumulative size across all files (5MB limit)
-    total_size=$((total_size + size))
-    if (( total_size > 5242880 )); then
-        echo "WARNING: Total file size exceeds 5MB limit"
-        echo "Processing completed ${#validated_files[@]} files before limit"
-        break
-    fi
-
-    # File passed all security checks, add to processing queue
-    validated_files+=("$todo_file")
-done
-
-# Enforce maximum file count after validation
-if (( ${#validated_files[@]} > 100 )); then
-    echo "WARNING: Found ${#validated_files[@]} TODO.md files, limit is 100"
-    echo "Processing first 100 files (sorted by modification time)"
-    # In practice: sort by mtime and take first 100
-fi
-```
-
-**3. Resource Limits:**
-- **Max TODO.md files**: 100 (if more found, process first 100 by modification time)
-- **Max file size**: 100KB per TODO.md file
-- **Max total processing**: 5MB across all files
-- **Processing timeout**: Report if sync takes >60 seconds
-
-If limits exceeded, process validated subset and warn user.
-
-**4. Security Error Reporting:**
-
-If security violations detected, report clearly:
-```
-SECURITY VIOLATION DETECTED
-
-File: ./path/to/file.md
-Issue: [Symlink detected | Outside workspace | Too large | etc.]
-Action: File skipped, not processed
-
-Security Summary:
-- Files scanned: 15
-- Files validated: 12
-- Files rejected: 3
-  - Symlinks: 1
-  - Outside workspace: 0
-  - Too large: 2
-```
+**Validation script details:**
+- Script location: `scripts/validate-tasks.sh` in plugin installation
+- Checks TASKS.md (exists, not symlink, writable, in current directory)
+- Discovers TODO.md files recursively (max depth 4, excluding common non-project directories)
+- Validates each TODO.md (not symlink, within workspace, size limits)
+- **Resource Limits:**
+  - Max TODO.md files: 100
+  - Max file size: 100KB per file
+  - Max total size: 5MB across all files
+- **Exit Codes:**
+  - 0: All validation passed
+  - 1: Some files rejected (warnings), proceed with validated subset
+  - 2: Critical error (TASKS.md issues), must abort
+- **Output:** JSON with validation results, errors, warnings, and validated file list
 
 ### 1. Scan Projects
-Read all TODO.md files found via discovery:
-- Use Glob tool with pattern `**/TODO.md`
-- Apply exclusion filters
-- **CRITICAL**: Apply security validation to EACH file (see above)
-- Read each validated TODO.md
+Read all TODO.md files from the validated list:
+- Use `$VALIDATED_TODO_FILES` array from validation script output
+- Files have already been discovered and security-validated (symlinks rejected, size limits enforced, workspace boundaries checked)
+- Read each validated TODO.md using Read tool
 - Extract project name from parent directory path (not absolute path)
 
 ### 2. Count Tasks by Status

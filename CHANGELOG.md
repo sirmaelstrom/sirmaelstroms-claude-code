@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `scripts/validate-tasks.sh` - Externalized security validation script for `/sync-tasks` command
+  - Validates TASKS.md existence, symlink detection, write permissions
+  - Discovers and validates TODO.md files with comprehensive security checks
+  - Returns structured JSON output with validation results and file lists
+  - Exit codes: 0 (success), 1 (warnings), 2 (critical error)
+  - Comprehensive test suite (`tests/test-validate-tasks.sh`) with 10 test cases
 - `scripts/parse-todo-tasks.py` - Dedicated TODO.md parsing script for `/sync-tasks` command
   - Ensures consistent task counting across all invocations
   - Handles edge cases: code blocks, nested checkboxes, multiple section variants
@@ -19,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Tab expansion (4 spaces) for consistent indentation handling
 
 ### Changed
+- `/sync-tasks` command now uses `scripts/validate-tasks.sh` for security validation
+  - Previous: Inline bash validation scripts (triggered permission prompts due to multi-line complexity)
+  - Now: Calls pre-approved validation script with JSON output
+  - Benefit: Eliminates permission prompts, improves testability and maintainability
+  - **Required permission:** `Bash(*sirmaelstroms-claude-code*/scripts/validate-tasks.sh*)`
 - `/sync-tasks` command now references `scripts/parse-todo-tasks.py` for parsing
   - Previous: Claude implemented parsing dynamically (variable behavior)
   - Now: Uses pre-tested script for reliability and consistency

@@ -155,6 +155,94 @@ This means:
 
 **Used by:** `/sync-tasks` command
 
+### `validate-tasks.sh`
+
+Security validation script for TASKS.md and TODO.md files used by the `/sync-tasks` command.
+
+**Purpose:**
+- Validates TASKS.md file safety (exists, not symlink, writable, in current directory)
+- Discovers TODO.md files recursively with exclusion filters
+- Validates each TODO.md file (not symlink, within workspace, size limits)
+- Returns structured JSON with validation results
+
+**Usage:**
+```bash
+scripts/validate-tasks.sh [--working-dir PATH]
+```
+
+**Options:**
+- `--working-dir PATH` - Directory to validate (default: current directory)
+
+**Exit Codes:**
+- `0` - All validation passed, safe to proceed
+- `1` - Some files rejected (warnings), proceed with validated subset
+- `2` - Critical error (TASKS.md issues), must abort
+
+**JSON Output Schema:**
+```json
+{
+  "status": "success|validation_failed|critical_error",
+  "tasks_md": {
+    "exists": true,
+    "is_symlink": false,
+    "is_writable": true,
+    "path": "./TASKS.md"
+  },
+  "todo_files": {
+    "discovered": 15,
+    "validated": 12,
+    "rejected": 3,
+    "files": [
+      {
+        "path": "./project1/TODO.md",
+        "size": 4096,
+        "status": "valid"
+      },
+      {
+        "path": "./project2/TODO.md",
+        "size": 2048,
+        "status": "rejected",
+        "reason": "symlink"
+      }
+    ]
+  },
+  "errors": ["3 files rejected due to security checks"],
+  "warnings": ["Skipping ./large/TODO.md (>100KB)"],
+  "limits": {
+    "max_files": 100,
+    "max_file_size": 102400,
+    "max_total_size": 5242880,
+    "total_size_processed": 245760
+  }
+}
+```
+
+**Security Features:**
+- Rejects symlinks (prevents TOCTOU attacks)
+- Verifies files are within workspace boundaries
+- Enforces size limits (100KB per file, 5MB total)
+- Limits file count (max 100 TODO.md files)
+- Excludes common non-project directories (.git, node_modules, bin, etc.)
+
+**Example:**
+```bash
+cd /path/to/workspace
+scripts/validate-tasks.sh --working-dir .
+
+# Check exit code
+if [ $? -eq 0 ]; then
+    echo "All files validated successfully"
+elif [ $? -eq 1 ]; then
+    echo "Some files rejected, but can proceed"
+else
+    echo "Critical error, cannot proceed"
+fi
+```
+
+**Used by:** `/sync-tasks` command
+
+**Tests:** Run `tests/test-validate-tasks.sh` to verify functionality
+
 ## Validation Scripts
 
 ### `validate-json.py`
