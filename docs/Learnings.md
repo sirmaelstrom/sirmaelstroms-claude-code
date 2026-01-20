@@ -269,21 +269,25 @@ When Claude Code loads project settings, it doesn't inherit from parent—it rep
 
 **Solution: Consolidate to Global**
 
-1. **Merged comprehensive permissions to global** (`~/.claude/settings.json`):
+1. **Merge comprehensive permissions to global** (`~/.claude/settings.json`):
    - All common operations (git, dotnet, npm, docker, file operations)
    - Read permissions for all home directories
    - Task agent pre-approvals
-   - 137 total permissions
+   - Project-specific rules with full path prefixes (e.g., `Bash(git -C /full/path/to/project ...)`)
+   - 144 total permissions
 
-2. **Reduced project settings to truly unique rules**:
-   - sirmaelstroms-claude-code: 7 project-specific git commands
-   - schedule-i-mod: 2 project-specific build scripts
+2. **Delete all project-specific `settings.local.json` files**:
+   - **Critical:** Simply adding permissions to global is NOT sufficient
+   - Local files will still replace global settings even if "empty" of useful permissions
+   - Must physically delete local settings files from active projects
 
-3. **Removed intermediate parent settings** to eliminate confusion
+3. **Remove intermediate parent settings** to eliminate confusion
 
-**Result:** Projects now inherit comprehensive global permissions and add only project-unique rules.
+**Result:** All projects inherit the full global permission set. No replacement behavior.
 
-**Key Insight:** Settings hierarchy is replacement-based, not merge-based. Keep base permissions global, project settings minimal.
+**Key Insight:** Settings hierarchy is replacement-based, not merge-based. The fix requires BOTH consolidating to global AND deleting local files. Documenting intent without completing implementation doesn't solve the problem.
+
+**Implementation Gap Discovered:** January 19, 2026 - Original documentation described this solution but local settings files were never actually deleted, causing continued permission prompts. The fix was documented but not executed.
 
 **Verification:**
 ```bash
