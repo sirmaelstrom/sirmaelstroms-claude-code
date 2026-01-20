@@ -43,6 +43,10 @@
   - [x] Multi-agent security review (adversarial + security engineer)
   - [x] Fix platform compatibility issues (macOS/Linux stat command)
   - [x] Document known limitations (TOCTOU, concurrent execution)
+  - [x] Create TODO.md format validator (`scripts/validate-todo-format.sh`) (2026-01-20)
+  - [x] Create TODO.md format specification (`docs/TODO-FORMAT.md`) (2026-01-20)
+  - [x] Validate task file format consistency across projects (2026-01-20)
+  - [x] Systematic debugging and verification of sync-tasks execution (2026-01-20)
 
 ## Completed (v1.0.0)
 
