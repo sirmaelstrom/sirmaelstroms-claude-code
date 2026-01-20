@@ -12,11 +12,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Ensures consistent task counting across all invocations
   - Handles edge cases: code blocks, nested checkboxes, multiple section variants
   - Outputs pipe-separated format: `active|blocked|in_progress|ideas|completed`
+  - Comprehensive error handling with user-friendly messages
+  - Type hints for better IDE support and code clarity
+  - File size validation (100KB limit, configurable)
+  - UTF-8 encoding declaration for cross-platform compatibility
+  - Tab expansion (4 spaces) for consistent indentation handling
 
 ### Changed
 - `/sync-tasks` command now references `scripts/parse-todo-tasks.py` for parsing
   - Previous: Claude implemented parsing dynamically (variable behavior)
   - Now: Uses pre-tested script for reliability and consistency
+- Checkbox counting specification clarified: only count tasks with NO indentation
+  - Previous spec: "0-4 spaces = top-level" (ambiguous, caused over-counting)
+  - New spec: "column 0 = top-level" (clear, matches actual TODO.md structure)
+  - Sub-tasks with any indentation are now correctly ignored
+
+### Fixed
+- Error messages now go to stderr instead of stdout (prevents data corruption in pipelines)
+- Usage message now uses actual script name instead of hardcoded name
+- Regex pattern compiled once for better performance (not in loop)
 
 ## [1.0.1] - 2026-01-19
 

@@ -174,12 +174,12 @@ Read all TODO.md files found via discovery:
    - Ignore headings nested under other headings (only level 2 headings `##`)
 
 2. **Checkbox Detection**:
-   - Must start line with pattern: `^( {0,4})\[[ xX]\]` (0-4 spaces, then checkbox)
+   - Must start line with pattern: `^- \[[ xX]\]` (no indentation before dash)
    - Unchecked: `[ ]` (space between brackets)
    - Checked: `[x]` or `[X]` (lowercase or uppercase X)
-   - **Top-level definition**: Checkboxes with 0-4 spaces indentation (markdown standard)
-   - **Nested items** (5+ spaces indentation): IGNORE, do not count
-   - Rationale: Markdown uses 4-space indentation for nesting levels
+   - **Top-level definition**: Checkboxes with NO indentation (column 0)
+   - **Nested items** (any indentation): IGNORE, do not count
+   - Rationale: Sub-tasks are indented (typically 2 spaces) to indicate hierarchy
 
 3. **Code Block Handling**:
    - Ignore checkboxes inside fenced code blocks (lines between ``` or ~~~, with optional language)
