@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-01-20
+
 ### Fixed
 - `/sync-tasks` command now uses Glob tool instead of bash find to locate scripts
   - Previous: Command file had bash blocks with `find ~/.claude/plugins -name "validate-tasks.sh"`
@@ -143,6 +145,7 @@ Initial public release.
   - Duration, project name, files modified, and last commit tracked via git
   - Future: When Claude Code adds per-tool hooks, full tracking will activate
 
+[1.0.3]: https://github.com/sirmaelstrom/sirmaelstroms-claude-code/releases/tag/v1.0.3
 [1.0.2]: https://github.com/sirmaelstrom/sirmaelstroms-claude-code/releases/tag/v1.0.2
 [1.0.1]: https://github.com/sirmaelstrom/sirmaelstroms-claude-code/releases/tag/v1.0.1
 [1.0.0]: https://github.com/sirmaelstrom/sirmaelstroms-claude-code/releases/tag/v1.0.0
