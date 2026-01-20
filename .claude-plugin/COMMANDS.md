@@ -343,6 +343,21 @@ cd /path/to/workspace
 **Integration**:
 Designed to run weekly (Mondays) as part of planning ritual, or after major task completion.
 
+**Security & Safety**:
+- **Symlink protection**: Rejects symlinked TODO.md or TASKS.md files (prevents arbitrary file access)
+- **Path containment**: Only processes files within current working directory tree
+- **File size limits**: Skips TODO.md files >100KB (resource protection)
+- **File count limits**: Maximum 100 TODO.md files processed (DoS prevention)
+- **Write validation**: Verifies TASKS.md is regular file in current directory before updates
+- **Fail-secure**: Stops on critical errors, skips individual file errors with warnings
+- **Not concurrent-safe**: Do not edit files or run multiple instances while sync is active
+
+**Troubleshooting**:
+- **"TASKS.md not found"**: Run from directory containing TASKS.md
+- **"Symlink not allowed"**: Replace symlink with regular file
+- **"Outside workspace"**: Ensure TODO.md files are in subdirectories, not parent directories
+- **"Too large"**: TODO.md files should be <100KB; consider splitting large task lists
+
 ---
 
 ## Command Notes

@@ -32,20 +32,145 @@ The sync-tasks command uses the **current working directory** as the base:
 
 ## Workflow Steps
 
+## CRITICAL SECURITY VALIDATION
+
+**Execute these checks BEFORE processing any files. If any check fails, STOP immediately.**
+
+### Pre-Execution Validation
+
+**1. Verify TASKS.md exists and is safe:**
+```bash
+# CRITICAL: TASKS.md must exist in current working directory
+if [[ ! -f "TASKS.md" ]]; then
+    echo "ERROR: TASKS.md not found in current directory"
+    echo "Please create TASKS.md first or run from correct directory"
+    exit 1
+fi
+
+# CRITICAL: TASKS.md must not be a symlink
+if [[ -L "TASKS.md" ]]; then
+    echo "SECURITY VIOLATION: TASKS.md is a symlink (not allowed)"
+    echo "Symlinks to TASKS.md are blocked to prevent arbitrary file overwrites"
+    exit 1
+fi
+
+# Verify TASKS.md is in current directory (no parent paths)
+if [[ "$(dirname "TASKS.md")" != "." ]]; then
+    echo "ERROR: TASKS.md must be in current working directory"
+    exit 1
+fi
+```
+
+**2. File Discovery Security (validate EACH discovered TODO.md):**
+```bash
+for todo_file in "${discovered_files[@]}"; do
+    # SECURITY: Reject symlinks
+    if [[ -L "$todo_file" ]]; then
+        echo "SECURITY WARNING: Skipping $todo_file (symlink not allowed)"
+        continue
+    fi
+
+    # SECURITY: Verify file is within workspace
+    realpath_file=$(realpath "$todo_file" 2>/dev/null || echo "INVALID")
+    realpath_cwd=$(realpath "." 2>/dev/null || pwd)
+
+    if [[ "$realpath_file" != "$realpath_cwd"/* ]]; then
+        echo "SECURITY WARNING: Skipping $todo_file (outside workspace)"
+        continue
+    fi
+
+    # SECURITY: Check file size (prevent DoS)
+    if [[ -f "$todo_file" ]]; then
+        size=$(stat -f%z "$todo_file" 2>/dev/null || stat -c%s "$todo_file" 2>/dev/null || echo 0)
+        if (( size > 102400 )); then
+            echo "WARNING: Skipping $todo_file (>100KB, TODO.md should be small)"
+            continue
+        fi
+    fi
+
+    # SECURITY: Verify it's a regular file
+    if [[ ! -f "$todo_file" ]]; then
+        echo "WARNING: Skipping $todo_file (not a regular file)"
+        continue
+    fi
+
+    # File passed all security checks, add to processing queue
+    validated_files+=("$todo_file")
+done
+```
+
+**3. Resource Limits:**
+- **Max TODO.md files**: 100 (if more found, process first 100 by modification time)
+- **Max file size**: 100KB per TODO.md file
+- **Max total processing**: 5MB across all files
+- **Processing timeout**: Report if sync takes >60 seconds
+
+If limits exceeded, process validated subset and warn user.
+
+**4. Security Error Reporting:**
+
+If security violations detected, report clearly:
+```
+SECURITY VIOLATION DETECTED
+
+File: ./path/to/file.md
+Issue: [Symlink detected | Outside workspace | Too large | etc.]
+Action: File skipped, not processed
+
+Security Summary:
+- Files scanned: 15
+- Files validated: 12
+- Files rejected: 3
+  - Symlinks: 1
+  - Outside workspace: 0
+  - Too large: 2
+```
+
 ### 1. Scan Projects
 Read all TODO.md files found via discovery:
 - Use Glob tool with pattern `**/TODO.md`
 - Apply exclusion filters
-- Read each project's TODO.md
+- **CRITICAL**: Apply security validation to EACH file (see above)
+- Read each validated TODO.md
 - Extract project name from parent directory path (not absolute path)
 
 ### 2. Count Tasks by Status
-For each project TODO.md, count tasks in each section:
+
+**Parsing Rules (EXPLICIT - prevent ambiguity):**
+
+1. **Heading Detection**:
+   - Match headings case-insensitive: `## Active`, `## active`, `## ACTIVE` all valid
+   - Exact text match required (after case normalization)
+   - Valid headings: `Active`, `Blocked`, `In Progress`, `Ideas / Future`, `Completed`
+   - Ignore headings nested under other headings (only level 2 headings `##`)
+
+2. **Checkbox Detection**:
+   - Must start line after optional whitespace: `^\s*\[[ xX]\]`
+   - Unchecked: `[ ]` (space between brackets)
+   - Checked: `[x]` or `[X]` (lowercase or uppercase X)
+   - Count only top-level list items (ignore nested sub-items)
+
+3. **Code Block Handling**:
+   - Ignore checkboxes inside code blocks (between triple backticks ```)
+   - Track code block state while parsing to skip checkbox counting inside them
+
+4. **Edge Cases**:
+   - If heading missing: Treat as 0 tasks for that section
+   - If TODO.md empty: Report 0 tasks for all sections
+   - If malformed checkboxes (e.g., `[  ]`, `[]`): Skip those lines
+   - If nested checkboxes: Count only first level under heading
+
+**For each project TODO.md, count tasks in each section:**
 - **Active** - `[ ]` checkboxes under "## Active" heading
 - **Blocked** - `[ ]` checkboxes under "## Blocked" heading
 - **In Progress** - `[ ]` checkboxes under "## In Progress" heading (if exists)
 - **Ideas/Future** - `[ ]` checkboxes under "## Ideas / Future" heading
-- **Completed** - `[x]` checkboxes under "## Completed" heading
+- **Completed** - `[x]` or `[X]` checkboxes under "## Completed" heading
+
+**Input Sanitization**:
+- Project names: Strip path separators (`/`, `\`), limit to 100 chars, remove control characters
+- Task descriptions: Not included in counts (only checkbox presence matters)
+- If project name invalid after sanitization, use "project_{hash}" as fallback
 
 ### 3. Identify Changes
 Compare current counts with "Project Task Summaries" section in TASKS.md:
@@ -55,16 +180,49 @@ Compare current counts with "Project Task Summaries" section in TASKS.md:
 - Note any newly blocked tasks
 
 ### 4. Update Central TASKS.md
-Update the "## Project Task Summaries (Auto-Synced by /sync-tasks)" section:
 
+**CRITICAL: Perform security validation BEFORE writing (see Pre-Execution Validation above)**
+
+**Section Update Logic:**
+
+1. **Locate target section**:
+   - Search for EXACT heading: `## Project Task Summaries (Auto-Synced by /sync-tasks)`
+   - If not found, append to END of TASKS.md:
+     ```markdown
+
+     ---
+
+     ## Project Task Summaries (Auto-Synced by /sync-tasks)
+     <!-- DO NOT EDIT MANUALLY - Updated by /sync-tasks command -->
+
+     ```
+
+2. **Replace section content**:
+   - If section exists: Replace from heading to next `##` heading (or EOF if last section)
+   - Use Edit tool with precise old_string/new_string to avoid corruption
+   - Preserve all content BEFORE and AFTER this section exactly
+
+3. **Section format**:
 ```markdown
+## Project Task Summaries (Auto-Synced by /sync-tasks)
+<!-- DO NOT EDIT MANUALLY - Updated by /sync-tasks command -->
+
 ### {project-name} ({total_active} tasks)
 - {active_count} active, {blocked_count} blocked, {in_progress_count} in progress
-- Last sync: YYYY-MM-DD
+- Last sync: YYYY-MM-DD HH:MM:SS
+- Details: `{relative-path-to-TODO.md}`
+
+### {project-2-name} ({total_active} tasks)
+- {active_count} active, {blocked_count} blocked, {in_progress_count} in progress
+- Last sync: YYYY-MM-DD HH:MM:SS
 - Details: `{relative-path-to-TODO.md}`
 ```
 
+4. **Update "Last updated" timestamp** at top of TASKS.md after successful sync
+
 **Note**: Paths are relative to the working directory where sync-tasks was invoked.
+
+**Safety**: If Edit tool fails (file changed during sync), report error and do NOT retry automatically.
 
 ### 5. Generate Sync Report
 Provide a concise summary:
@@ -126,11 +284,40 @@ After syncing, output:
 
 ## Error Handling
 
-If errors occur:
-- Report which project TODO.md had issues
-- Continue processing other projects
-- Include errors in sync report
-- Do not update TASKS.md if critical errors occurred
+**Fail-Secure Behavior:**
+
+**Critical Errors (STOP immediately, do NOT update TASKS.md):**
+- TASKS.md does not exist in current directory
+- TASKS.md is a symlink
+- TASKS.md is not writable
+- More than 100 TODO.md files discovered (resource limit)
+- Total file size exceeds 5MB
+
+**Non-Critical Errors (Skip file, continue processing):**
+- Individual TODO.md is symlink
+- Individual TODO.md outside workspace
+- Individual TODO.md >100KB
+- Individual TODO.md parsing fails
+- Individual TODO.md has permission errors
+
+**Error Reporting:**
+```
+Sync completed with warnings:
+- Files processed: 12
+- Files skipped: 3
+  - example-project/TODO.md: Symlink detected (security)
+  - archived/old-project/TODO.md: Outside workspace (security)
+  - large-project/TODO.md: >100KB (too large)
+```
+
+**Concurrency Warning:**
+This command is NOT safe for concurrent execution:
+- Do not edit TASKS.md or TODO.md files while sync is running
+- Do not run multiple instances of /sync-tasks simultaneously
+- If TASKS.md is modified during sync, changes may be overwritten
+- For safety, review TASKS.md in git diff after sync
+
+If Edit tool fails due to file changes, report error and suggest manual review.
 
 ## Example Invocation
 
