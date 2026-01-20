@@ -32,7 +32,7 @@ The sync-tasks command uses the **current working directory** as the base:
 
 ## Workflow Steps
 
-## CRITICAL SECURITY VALIDATION
+### CRITICAL SECURITY VALIDATION
 
 **Execute these checks BEFORE processing any files. If any check fails, STOP immediately.**
 
@@ -63,40 +63,69 @@ fi
 
 **2. File Discovery Security (validate EACH discovered TODO.md):**
 ```bash
+total_size=0
 for todo_file in "${discovered_files[@]}"; do
-    # SECURITY: Reject symlinks
+    # SECURITY: Reject symlinks (TOCTOU-aware - check early)
     if [[ -L "$todo_file" ]]; then
         echo "SECURITY WARNING: Skipping $todo_file (symlink not allowed)"
         continue
     fi
 
-    # SECURITY: Verify file is within workspace
-    realpath_file=$(realpath "$todo_file" 2>/dev/null || echo "INVALID")
-    realpath_cwd=$(realpath "." 2>/dev/null || pwd)
+    # SECURITY: Verify it's a regular file (must be file before path checks)
+    if [[ ! -f "$todo_file" ]]; then
+        echo "WARNING: Skipping $todo_file (not a regular file)"
+        continue
+    fi
+
+    # SECURITY: Verify file is within workspace (both must use realpath or both fail)
+    realpath_file=$(realpath "$todo_file" 2>/dev/null)
+    realpath_cwd=$(realpath "." 2>/dev/null)
+
+    if [[ -z "$realpath_file" ]] || [[ -z "$realpath_cwd" ]]; then
+        echo "WARNING: Skipping $todo_file (path resolution failed)"
+        continue
+    fi
 
     if [[ "$realpath_file" != "$realpath_cwd"/* ]]; then
         echo "SECURITY WARNING: Skipping $todo_file (outside workspace)"
         continue
     fi
 
-    # SECURITY: Check file size (prevent DoS)
-    if [[ -f "$todo_file" ]]; then
-        size=$(stat -f%z "$todo_file" 2>/dev/null || stat -c%s "$todo_file" 2>/dev/null || echo 0)
-        if (( size > 102400 )); then
-            echo "WARNING: Skipping $todo_file (>100KB, TODO.md should be small)"
-            continue
-        fi
+    # SECURITY: Check file size (prevent DoS, portable stat command)
+    if [[ "$(uname)" == "Darwin" ]]; then
+        size=$(stat -f %z "$todo_file" 2>/dev/null)
+    else
+        size=$(stat -c %s "$todo_file" 2>/dev/null)
     fi
 
-    # SECURITY: Verify it's a regular file
-    if [[ ! -f "$todo_file" ]]; then
-        echo "WARNING: Skipping $todo_file (not a regular file)"
+    if [[ -z "$size" ]] || [[ ! "$size" =~ ^[0-9]+$ ]]; then
+        echo "WARNING: Skipping $todo_file (cannot determine file size)"
         continue
+    fi
+
+    if (( size > 102400 )); then
+        echo "WARNING: Skipping $todo_file (>100KB, TODO.md should be small)"
+        continue
+    fi
+
+    # SECURITY: Check total cumulative size across all files (5MB limit)
+    total_size=$((total_size + size))
+    if (( total_size > 5242880 )); then
+        echo "WARNING: Total file size exceeds 5MB limit"
+        echo "Processing completed ${#validated_files[@]} files before limit"
+        break
     fi
 
     # File passed all security checks, add to processing queue
     validated_files+=("$todo_file")
 done
+
+# Enforce maximum file count after validation
+if (( ${#validated_files[@]} > 100 )); then
+    echo "WARNING: Found ${#validated_files[@]} TODO.md files, limit is 100"
+    echo "Processing first 100 files (sorted by modification time)"
+    # In practice: sort by mtime and take first 100
+fi
 ```
 
 **3. Resource Limits:**
@@ -145,14 +174,18 @@ Read all TODO.md files found via discovery:
    - Ignore headings nested under other headings (only level 2 headings `##`)
 
 2. **Checkbox Detection**:
-   - Must start line after optional whitespace: `^\s*\[[ xX]\]`
+   - Must start line with pattern: `^( {0,4})\[[ xX]\]` (0-4 spaces, then checkbox)
    - Unchecked: `[ ]` (space between brackets)
    - Checked: `[x]` or `[X]` (lowercase or uppercase X)
-   - Count only top-level list items (ignore nested sub-items)
+   - **Top-level definition**: Checkboxes with 0-4 spaces indentation (markdown standard)
+   - **Nested items** (5+ spaces indentation): IGNORE, do not count
+   - Rationale: Markdown uses 4-space indentation for nesting levels
 
 3. **Code Block Handling**:
-   - Ignore checkboxes inside code blocks (between triple backticks ```)
-   - Track code block state while parsing to skip checkbox counting inside them
+   - Ignore checkboxes inside fenced code blocks (lines between ``` or ~~~, with optional language)
+   - Ignore checkboxes inside indented code blocks (lines with 4+ space prefix)
+   - Track code block state while parsing to skip checkbox counting
+   - Inline code (single backticks) does NOT affect checkbox counting
 
 4. **Edge Cases**:
    - If heading missing: Treat as 0 tasks for that section
@@ -168,9 +201,14 @@ Read all TODO.md files found via discovery:
 - **Completed** - `[x]` or `[X]` checkboxes under "## Completed" heading
 
 **Input Sanitization**:
-- Project names: Strip path separators (`/`, `\`), limit to 100 chars, remove control characters
+- **Project name extraction**:
+  1. Compute relative path from workspace root: `${todo_file#$workspace_root/}`
+  2. Extract first directory component: `${relative_path%%/*}`
+  3. Sanitize: Remove path separators, control chars, limit to 100 chars
+  4. Validate: Must match `^[a-zA-Z0-9_.-]+$` (alphanumeric, underscore, dash, dot only)
+  5. If invalid: Use `project_$(sha256sum <<< "$todo_file" | head -c 8)` as fallback
 - Task descriptions: Not included in counts (only checkbox presence matters)
-- If project name invalid after sanitization, use "project_{hash}" as fallback
+- Example: `/workspace/my-app/src/TODO.md` → relative `my-app/src/TODO.md` → project `my-app`
 
 ### 3. Identify Changes
 Compare current counts with "Project Task Summaries" section in TASKS.md:
@@ -187,7 +225,9 @@ Compare current counts with "Project Task Summaries" section in TASKS.md:
 
 1. **Locate target section**:
    - Search for EXACT heading: `## Project Task Summaries (Auto-Synced by /sync-tasks)`
-   - If not found, append to END of TASKS.md:
+   - **Validation**: Heading must appear EXACTLY ONCE in TASKS.md
+   - If multiple occurrences: Report error "TASKS.md is malformed (duplicate sections)" and ABORT
+   - If zero occurrences: Append to END of TASKS.md:
      ```markdown
 
      ---
@@ -201,6 +241,7 @@ Compare current counts with "Project Task Summaries" section in TASKS.md:
    - If section exists: Replace from heading to next `##` heading (or EOF if last section)
    - Use Edit tool with precise old_string/new_string to avoid corruption
    - Preserve all content BEFORE and AFTER this section exactly
+   - **Safety**: If section boundaries unclear, report error and abort
 
 3. **Section format**:
 ```markdown
@@ -318,6 +359,32 @@ This command is NOT safe for concurrent execution:
 - For safety, review TASKS.md in git diff after sync
 
 If Edit tool fails due to file changes, report error and suggest manual review.
+
+## Known Security Limitations
+
+**TOCTOU (Time-of-Check-Time-of-Use) Race Conditions**:
+- File state can change between validation and processing (inherent shell limitation)
+- **Impact**: Symlink could be created after symlink check passes
+- **Mitigation**: Multiple validation points reduce window, but cannot eliminate race
+- **Recommendation**: Do not run sync-tasks on untrusted or actively modified directories
+
+**Cross-Platform Compatibility**:
+- `stat` command syntax differs (macOS: `-f %z`, Linux: `-c %s`)
+- `realpath` may not be available on all systems (requires coreutils)
+- **Fallback**: Script detects platform and uses appropriate commands
+- **Limitation**: Obscure platforms may have compatibility issues
+
+**Concurrent Execution Safety**:
+- No file locking mechanism implemented
+- **Impact**: Simultaneous runs or file edits can cause corruption
+- **Mitigation**: Single-user tool design, warns against concurrent use
+- **Recommendation**: Review git diff after sync, avoid editing files during sync
+
+**Symbolic Link Timing Attacks**:
+- Sub-second timing attacks could theoretically bypass checks
+- **Impact**: Requires precise timing and rapid file manipulation
+- **Mitigation**: Multiple validation points make timing extremely difficult
+- **Recommendation**: Low risk in practice, document for completeness
 
 ## Example Invocation
 

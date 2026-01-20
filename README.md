@@ -4,7 +4,7 @@ A custom .NET/C#/PowerShell-focused Claude Code plugin collection with slash com
 
 ## Overview
 
-This plugin extends [Claude Code](https://claude.ai/code) with specialized tools for .NET development, PowerShell scripting, SQL Server work, and general software engineering workflows. It includes 9 slash commands, 9 custom agents, and automation hooks for code formatting and Discord notifications.
+This plugin extends [Claude Code](https://claude.ai/code) with specialized tools for .NET development, PowerShell scripting, SQL Server work, and general software engineering workflows. It includes 10 slash commands, 9 custom agents, and automation hooks for code formatting and Discord notifications.
 
 ## Requirements
 
@@ -66,7 +66,7 @@ Install directly from GitHub via Claude Code's plugin system:
    ```
 
 **What's included:**
-- ✅ 9 slash commands (`/build-test`, `/commit-push-pr`, `/code-explain`, etc.)
+- ✅ 10 slash commands (`/build-test`, `/commit-push-pr`, `/sync-tasks`, etc.)
 - ✅ 9 specialized agents (dotnet-architect, security-engineer, etc.)
 - ✅ Auto-updates via `/plugin update`
 
@@ -169,7 +169,7 @@ See [QUICKSTART.md](QUICKSTART.md) for webhook setup and detailed usage.
 
 ## Features
 
-### Slash Commands (9)
+### Slash Commands (10)
 
 **Git Workflow:**
 - `/commit-push-pr` - Full git workflow: commit, push, create PR with summary and test plan
@@ -178,6 +178,9 @@ See [QUICKSTART.md](QUICKSTART.md) for webhook setup and detailed usage.
 - `/build-test` - Build and test .NET solutions with error reporting
 - `/new-project` - Scaffold new .NET projects with template selection
 - `/add-package` - Search and add NuGet packages interactively
+
+**Task Management:**
+- `/sync-tasks` - Synchronize project TODO.md files with central TASKS.md for unified tracking
 
 **Code Quality:**
 - `/code-explain` - Generate detailed code explanations

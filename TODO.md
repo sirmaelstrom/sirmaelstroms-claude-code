@@ -34,7 +34,17 @@
 - [ ] Expand agent library based on usage patterns
 - [ ] Create agent for code migration (WebForms → Minimal APIs)
 
-## Completed (v1.0)
+## Completed (v1.0.1)
+
+- [x] Add `/sync-tasks` command for task synchronization (2026-01-19)
+  - [x] Implement hierarchical task management (GOALS.md → TASKS.md → TODO.md)
+  - [x] Add security validation (symlinks, path containment, size limits)
+  - [x] Add parsing rules (checkbox detection, code block handling)
+  - [x] Multi-agent security review (adversarial + security engineer)
+  - [x] Fix platform compatibility issues (macOS/Linux stat command)
+  - [x] Document known limitations (TOCTOU, concurrent execution)
+
+## Completed (v1.0.0)
 
 - [x] Create plugin manifest (`.claude-plugin/plugin.json`)
 - [x] Build slash commands library (9 commands)
@@ -49,4 +59,3 @@
 - [x] Configure Discord/Slack webhook notifications
 - [x] Release v1.0.0
 - [x] Publish to GitHub for plugin marketplace
-- [x] Add `/sync-tasks` command for task synchronization (2026-01-19)

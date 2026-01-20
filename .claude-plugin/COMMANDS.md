@@ -346,11 +346,17 @@ Designed to run weekly (Mondays) as part of planning ritual, or after major task
 **Security & Safety**:
 - **Symlink protection**: Rejects symlinked TODO.md or TASKS.md files (prevents arbitrary file access)
 - **Path containment**: Only processes files within current working directory tree
-- **File size limits**: Skips TODO.md files >100KB (resource protection)
+- **File size limits**: Skips TODO.md files >100KB, total processing <5MB (resource protection)
 - **File count limits**: Maximum 100 TODO.md files processed (DoS prevention)
 - **Write validation**: Verifies TASKS.md is regular file in current directory before updates
 - **Fail-secure**: Stops on critical errors, skips individual file errors with warnings
 - **Not concurrent-safe**: Do not edit files or run multiple instances while sync is active
+
+**Known Limitations**:
+- **TOCTOU race conditions**: File state can change between validation and processing (inherent shell limitation)
+- **Cross-platform**: stat/realpath command syntax handled, but obscure platforms may have issues
+- **Symbolic link timing**: Sub-second attacks theoretically possible but highly impractical
+- **Recommendation**: Do not run on untrusted directories, review git diff after sync
 
 **Troubleshooting**:
 - **"TASKS.md not found"**: Run from directory containing TASKS.md
