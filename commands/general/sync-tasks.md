@@ -40,67 +40,30 @@ The sync-tasks command uses the **current working directory** as the base:
 
 **Execute validation script to check TASKS.md and discover/validate TODO.md files:**
 
-1. Use Glob tool to locate validate-tasks.sh:
+1. **REQUIRED: Use Glob tool** (NOT bash find) to locate validate-tasks.sh:
    - Pattern: `~/.claude/plugins/**/sirmaelstroms-claude-code/scripts/validate-tasks.sh`
    - This handles both marketplace and local installations
-   - If not found, report error: "validate-tasks.sh not found in plugin installation"
+   - If Glob returns no matches, report error: "validate-tasks.sh not found in plugin installation"
+   - **Why Glob**: Already permitted globally, avoids permission prompts from bash find
 
-2. Execute the validation script using Bash tool:
+2. Execute the validation script with the path from Glob:
+   - Run: `<script_path> --working-dir "."` using Bash tool
+   - Capture both output (JSON) and exit code
 
-```bash
-# Run validation and capture output (use the path from Glob above)
-VALIDATION_OUTPUT=$("<SCRIPT_PATH>" --working-dir "." 2>&1)
-VALIDATION_EXIT=$?
+3. Parse the JSON output from validation script:
+   - Extract `status` field (success/validation_failed/critical_error)
+   - Extract validated TODO.md file paths from `todo_files.files[].path` where status="valid"
+   - Extract any errors from `errors[]` array
+   - Extract any warnings from `warnings[]` array
 
-# Parse JSON output
-if command -v jq &>/dev/null; then
-    # Use jq for robust JSON parsing
-    STATUS=$(echo "$VALIDATION_OUTPUT" | jq -r '.status')
-    VALIDATED_FILES=$(echo "$VALIDATION_OUTPUT" | jq -r '.todo_files.files[] | select(.status=="valid") | .path')
-    ERRORS=$(echo "$VALIDATION_OUTPUT" | jq -r '.errors[]' 2>/dev/null)
-    WARNINGS=$(echo "$VALIDATION_OUTPUT" | jq -r '.warnings[]' 2>/dev/null)
-else
-    # Fallback: simple grep parsing if jq not available
-    STATUS=$(echo "$VALIDATION_OUTPUT" | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
-    # For file paths, this is less reliable without jq, but workable
-    VALIDATED_FILES=$(echo "$VALIDATION_OUTPUT" | grep '"status":"valid"' | grep -o '"path":"[^"]*"' | cut -d'"' -f4)
-fi
+4. Handle validation results based on exit code:
+   - **Exit code 2 (critical error)**: Display errors from JSON, abort sync operation
+   - **Exit code 1 (warnings)**: Display warnings, continue with only validated files
+   - **Exit code 0 (success)**: Proceed with all validated TODO.md files
 
-# Handle validation results
-if [[ $VALIDATION_EXIT -eq 2 ]]; then
-    echo "========================================="
-    echo "CRITICAL ERROR: Cannot proceed with sync"
-    echo "========================================="
-    echo ""
-    echo "$VALIDATION_OUTPUT" | jq '.' 2>/dev/null || echo "$VALIDATION_OUTPUT"
-    echo ""
-    echo "Please fix the errors above and try again."
-    exit 1
-elif [[ $VALIDATION_EXIT -eq 1 ]]; then
-    echo "========================================="
-    echo "WARNING: Some files rejected during validation"
-    echo "========================================="
-    echo ""
-    if [[ -n "$ERRORS" ]]; then
-        echo "Errors:"
-        echo "$ERRORS"
-        echo ""
-    fi
-    if [[ -n "$WARNINGS" ]]; then
-        echo "Warnings:"
-        echo "$WARNINGS"
-        echo ""
-    fi
-    echo "Proceeding with validated subset of files..."
-    echo ""
-fi
-
-# Convert validated files to array
-mapfile -t VALIDATED_TODO_FILES <<< "$VALIDATED_FILES"
-
-echo "Validation complete: ${#VALIDATED_TODO_FILES[@]} TODO.md files validated"
-echo ""
-```
+5. Report validation results:
+   - Display count of validated TODO.md files
+   - List any files that were rejected (from warnings/errors)
 
 **Validation script details:**
 - Script location: `scripts/validate-tasks.sh` in plugin installation
@@ -175,20 +138,16 @@ Read all TODO.md files from the validated list:
 
 Use the provided parsing script for consistent task counting:
 
-1. Use Glob tool to locate parse-todo-tasks.py:
+1. **REQUIRED: Use Glob tool** (NOT bash find) to locate parse-todo-tasks.py:
    - Pattern: `~/.claude/plugins/**/sirmaelstroms-claude-code/scripts/parse-todo-tasks.py`
    - This handles both marketplace and local installations
-   - If not found, report error: "parse-todo-tasks.py not found in plugin installation"
+   - If Glob returns no matches, report error: "parse-todo-tasks.py not found in plugin installation"
+   - **Why Glob**: Already permitted globally, avoids permission prompts from bash find
 
-2. For each TODO.md file, parse and count tasks:
-
-```bash
-# Parse TODO.md file and get counts (use the path from Glob above)
-result=$(python3 "<PARSE_SCRIPT_PATH>" "$todo_file")
-IFS='|' read -r active blocked in_progress ideas completed <<< "$result"
-```
-
-The script outputs pipe-separated counts: `active|blocked|in_progress|ideas|completed`
+2. For each validated TODO.md file from step 1:
+   - Run: `python3 <parse_script_path> <todo_file_path>` using Bash tool
+   - Parse the pipe-separated output: `active|blocked|in_progress|ideas|completed`
+   - Store counts for this project
 
 **Benefits**:
 - Consistent parsing logic across all invocations

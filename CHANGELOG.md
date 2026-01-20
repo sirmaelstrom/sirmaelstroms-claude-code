@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-01-20
+
+### Fixed
+- `/sync-tasks` command converted all bash code blocks to prose instructions
+  - Previous (1.0.3): Prose said "use Glob" but bash blocks remained, Claude ignored instructions
+  - Problem: Claude executed bash code blocks instead of following prose instructions
+  - Now: ALL bash code removed, replaced with explicit step-by-step prose directives
+  - Emphasized "REQUIRED: Use Glob tool (NOT bash find)" with explanation of why
+  - Benefit: Eliminates all permission prompts by ensuring Claude uses Glob instead of bash find
+
 ## [1.0.3] - 2026-01-20
 
 ### Fixed
@@ -15,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Problem: bash find commands triggered permission prompts despite permission rules
   - Now: Instructions tell Claude to use Glob tool (already permitted, no prompts)
   - Benefit: Eliminates remaining 2 permission prompts when running /sync-tasks
+  - Note: This version didn't work - Claude still used bash find because bash code blocks remained
 
 ## [1.0.2] - 2026-01-20
 
@@ -145,6 +156,7 @@ Initial public release.
   - Duration, project name, files modified, and last commit tracked via git
   - Future: When Claude Code adds per-tool hooks, full tracking will activate
 
+[1.0.4]: https://github.com/sirmaelstrom/sirmaelstroms-claude-code/releases/tag/v1.0.4
 [1.0.3]: https://github.com/sirmaelstrom/sirmaelstroms-claude-code/releases/tag/v1.0.3
 [1.0.2]: https://github.com/sirmaelstrom/sirmaelstroms-claude-code/releases/tag/v1.0.2
 [1.0.1]: https://github.com/sirmaelstrom/sirmaelstroms-claude-code/releases/tag/v1.0.1
