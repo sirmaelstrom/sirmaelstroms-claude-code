@@ -5,6 +5,19 @@ All notable changes to sirmaelstroms-claude-code will be documented in this file
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `scripts/parse-todo-tasks.py` - Dedicated TODO.md parsing script for `/sync-tasks` command
+  - Ensures consistent task counting across all invocations
+  - Handles edge cases: code blocks, nested checkboxes, multiple section variants
+  - Outputs pipe-separated format: `active|blocked|in_progress|ideas|completed`
+
+### Changed
+- `/sync-tasks` command now references `scripts/parse-todo-tasks.py` for parsing
+  - Previous: Claude implemented parsing dynamically (variable behavior)
+  - Now: Uses pre-tested script for reliability and consistency
+
 ## [1.0.1] - 2026-01-19
 
 ### Added

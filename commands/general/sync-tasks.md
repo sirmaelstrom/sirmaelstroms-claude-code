@@ -210,6 +210,25 @@ Read all TODO.md files found via discovery:
 - Task descriptions: Not included in counts (only checkbox presence matters)
 - Example: `/workspace/my-app/src/TODO.md` → relative `my-app/src/TODO.md` → project `my-app`
 
+**Implementation:**
+
+Use the provided parsing script for consistent task counting:
+
+```bash
+# Parse TODO.md file and get counts
+result=$(python3 scripts/parse-todo-tasks.py "$todo_file")
+IFS='|' read -r active blocked in_progress ideas completed <<< "$result"
+```
+
+The script outputs pipe-separated counts: `active|blocked|in_progress|ideas|completed`
+
+**Script location**: `scripts/parse-todo-tasks.py` (in the plugin repository)
+
+**Benefits**:
+- Consistent parsing logic across all invocations
+- Pre-tested implementation (handles edge cases, code blocks, nested checkboxes)
+- Clear separation of concerns (parsing vs. orchestration)
+
 ### 3. Identify Changes
 Compare current counts with "Project Task Summaries" section in TASKS.md:
 - Highlight new tasks (count increased)

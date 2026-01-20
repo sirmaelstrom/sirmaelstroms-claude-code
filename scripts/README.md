@@ -118,6 +118,43 @@ Each includes:
 - Files changed
 - Last commit
 
+## Task Management Scripts
+
+### `parse-todo-tasks.py`
+
+Parses TODO.md files and counts tasks by section for the `/sync-tasks` command.
+
+**Usage:**
+```bash
+python3 scripts/parse-todo-tasks.py path/to/TODO.md
+```
+
+**Output format:**
+```
+active|blocked|in_progress|ideas|completed
+```
+
+**Example:**
+```bash
+$ python3 scripts/parse-todo-tasks.py github/my-project/TODO.md
+2|0|1|5|12
+```
+
+This means:
+- 2 active tasks
+- 0 blocked tasks
+- 1 in progress task
+- 5 ideas/future tasks
+- 12 completed tasks
+
+**Features:**
+- Counts only top-level checkboxes (no nested items)
+- Handles code blocks (fenced and indented)
+- Supports multiple section variants (e.g., "## Active (v1.1)" counts as Active)
+- Case-insensitive section matching
+
+**Used by:** `/sync-tasks` command
+
 ## Validation Scripts
 
 ### `validate-json.py`
