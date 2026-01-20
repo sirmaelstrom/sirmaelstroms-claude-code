@@ -301,6 +301,50 @@ Generates appropriate documentation based on context:
 
 ---
 
+### `/sync-tasks`
+
+**Description**: Synchronize project TODO.md files with central TASKS.md for unified task tracking.
+
+**Usage**:
+```bash
+cd /path/to/workspace
+/sync-tasks
+```
+
+**Prerequisites**:
+- TASKS.md file must exist in current working directory
+- At least one TODO.md file in subdirectories
+
+**Expected Behavior**:
+1. Scans all `**/TODO.md` files recursively from current directory
+2. Excludes common non-project directories (.git, node_modules, bin, obj, archive, etc.)
+3. Counts tasks by status (active, blocked, in progress, completed)
+4. Compares with current TASKS.md state
+5. Updates "Project Task Summaries" section in TASKS.md with relative paths
+6. Generates sync report with:
+   - Updated project summaries
+   - New and completed tasks since last sync
+   - Blockers that have persisted >7 days
+   - Suggested priorities for this week
+
+**Output Includes**:
+- Task count per project (active, blocked, in progress)
+- Changes since last sync (new/completed tasks)
+- Newly blocked tasks flagged for attention
+- Priority suggestions based on dependencies and quick wins
+
+**Sync Rules**:
+- TASKS.md is authoritative for priorities (what to work on)
+- Project TODO.md is authoritative for details (how to do it)
+- Never deletes completed tasks (moves to "Completed" section)
+- Flags blockers >7 days for review
+- Suggests promoting important tasks to TASKS.md "This Week"
+
+**Integration**:
+Designed to run weekly (Mondays) as part of planning ritual, or after major task completion.
+
+---
+
 ## Command Notes
 
 **Model**: Most commands use `claude-sonnet-4-5` or `claude-sonnet-4-5-20250929`
