@@ -40,19 +40,16 @@ The sync-tasks command uses the **current working directory** as the base:
 
 **Execute validation script to check TASKS.md and discover/validate TODO.md files:**
 
+1. Use Glob tool to locate validate-tasks.sh:
+   - Pattern: `~/.claude/plugins/**/sirmaelstroms-claude-code/scripts/validate-tasks.sh`
+   - This handles both marketplace and local installations
+   - If not found, report error: "validate-tasks.sh not found in plugin installation"
+
+2. Execute the validation script using Bash tool:
+
 ```bash
-# Locate validate-tasks.sh (handles marketplace or local installation)
-SCRIPT_PATH=$(find ~/.claude/plugins -name "validate-tasks.sh" \
-  -path "*/sirmaelstroms-claude-code/*" -type f 2>/dev/null | head -1)
-
-if [[ -z "$SCRIPT_PATH" ]]; then
-    echo "ERROR: validate-tasks.sh not found in plugin installation"
-    echo "Please ensure sirmaelstroms-claude-code plugin is properly installed"
-    exit 1
-fi
-
-# Run validation and capture output
-VALIDATION_OUTPUT=$("$SCRIPT_PATH" --working-dir "." 2>&1)
+# Run validation and capture output (use the path from Glob above)
+VALIDATION_OUTPUT=$("<SCRIPT_PATH>" --working-dir "." 2>&1)
 VALIDATION_EXIT=$?
 
 # Parse JSON output
@@ -178,15 +175,20 @@ Read all TODO.md files from the validated list:
 
 Use the provided parsing script for consistent task counting:
 
+1. Use Glob tool to locate parse-todo-tasks.py:
+   - Pattern: `~/.claude/plugins/**/sirmaelstroms-claude-code/scripts/parse-todo-tasks.py`
+   - This handles both marketplace and local installations
+   - If not found, report error: "parse-todo-tasks.py not found in plugin installation"
+
+2. For each TODO.md file, parse and count tasks:
+
 ```bash
-# Parse TODO.md file and get counts
-result=$(python3 scripts/parse-todo-tasks.py "$todo_file")
+# Parse TODO.md file and get counts (use the path from Glob above)
+result=$(python3 "<PARSE_SCRIPT_PATH>" "$todo_file")
 IFS='|' read -r active blocked in_progress ideas completed <<< "$result"
 ```
 
 The script outputs pipe-separated counts: `active|blocked|in_progress|ideas|completed`
-
-**Script location**: `scripts/parse-todo-tasks.py` (in the plugin repository)
 
 **Benefits**:
 - Consistent parsing logic across all invocations

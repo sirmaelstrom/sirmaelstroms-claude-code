@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `/sync-tasks` command now uses Glob tool instead of bash find to locate scripts
+  - Previous: Command file had bash blocks with `find ~/.claude/plugins -name "validate-tasks.sh"`
+  - Problem: bash find commands triggered permission prompts despite permission rules
+  - Now: Instructions tell Claude to use Glob tool (already permitted, no prompts)
+  - Benefit: Eliminates remaining 2 permission prompts when running /sync-tasks
+
 ## [1.0.2] - 2026-01-20
 
 ### Added
