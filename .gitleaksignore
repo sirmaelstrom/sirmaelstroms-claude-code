@@ -1,0 +1,4 @@
+# Example curl commands and placeholder tokens in documentation templates
+ae30c97ac90dadcbab830b9c4f369aa705559b4d:commands/general/docs-generate.md:curl-auth-header:140
+ae30c97ac90dadcbab830b9c4f369aa705559b4d:agents/general/technical-writer.md:curl-auth-header:292
+ae30c97ac90dadcbab830b9c4f369aa705559b4d:agents/general/technical-writer.md:generic-api-key:278
