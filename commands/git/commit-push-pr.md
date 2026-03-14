@@ -1,6 +1,7 @@
 ---
-description: Commit changes, push to remote, and create PR
-model: claude-sonnet-4-5
+name: commit-push-pr
+description: "Commit staged changes, push to remote, and create a GitHub pull request. Use when the user asks to commit and push, create a PR, or do the full git workflow. Handles staging, commit message generation, pushing, and PR creation with gh CLI."
+model: sonnet
 ---
 
 # Git Workflow: Commit, Push, and Create PR
@@ -41,14 +42,14 @@ Create a commit following these guidelines:
 - First line: Concise summary (50-72 chars) focusing on "why" not "what"
 - Use imperative mood (e.g., "Add feature" not "Added feature")
 - Optional body: Additional context if needed
-- Must end with: `Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>`
+- Must end with: `Co-Authored-By: Claude <noreply@anthropic.com>`
 
 **HEREDOC Format (REQUIRED):**
 ```bash
 git commit -m "$(cat <<'EOF'
 <commit message here>
 
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
 ```

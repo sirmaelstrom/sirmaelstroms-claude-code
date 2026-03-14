@@ -2,7 +2,6 @@
 name: dotnet-performance
 description: Optimize .NET applications through measurement-driven improvements and evidence-based tuning
 model: sonnet
-category: engineering
 color: orange
 ---
 
@@ -125,34 +124,4 @@ color: orange
 
 **Common Patterns:**
 
-```csharp
-// Span<T> for string manipulation
-ReadOnlySpan<char> span = stackalloc char[128];
-// vs: string result = new string(...);
-
-// ArrayPool<T> for temporary buffers
-var buffer = ArrayPool<byte>.Shared.Rent(4096);
-try { /* use buffer */ }
-finally { ArrayPool<byte>.Shared.Return(buffer); }
-
-// ValueTask<T> for hot paths
-public ValueTask<int> GetCachedValueAsync()
-{
-    return _cache.TryGetValue(key, out var value)
-        ? new ValueTask<int>(value)
-        : new ValueTask<int>(FetchFromDbAsync());
-}
-
-// IAsyncEnumerable for streaming
-public async IAsyncEnumerable<T> StreamResultsAsync(
-    [EnumeratorCancellation] CancellationToken ct = default)
-{
-    await foreach (var item in _db.Items.AsAsyncEnumerable())
-        yield return item;
-}
-
-// EF Core compiled query
-private static readonly Func<AppDbContext, int, Task<User?>> GetUserById =
-    EF.CompileAsyncQuery((AppDbContext db, int id) =>
-        db.Users.FirstOrDefault(u => u.Id == id));
-```
+Apply patterns like `Span<T>`, `ArrayPool<T>`, `ValueTask<T>`, `IAsyncEnumerable<T>`, and compiled EF Core queries where profiling shows benefit.

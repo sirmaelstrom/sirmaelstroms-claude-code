@@ -1,6 +1,7 @@
 ---
-model: claude-sonnet-4-5
-description: Generate detailed explanations of code structure, logic, and patterns
+name: code-explain
+model: sonnet
+description: "Generate detailed explanations of code structure, logic, and patterns. Use when the user asks to explain code, understand a function, walk through logic, or analyze complexity. Provides progressive-depth explanations with visual diagrams where helpful."
 ---
 
 # Code Explanation and Analysis
@@ -43,10 +44,10 @@ Generate appropriate diagrams using Mermaid syntax:
 ### 4. Complexity Analysis
 
 Evaluate and report on:
-- **Cyclomatic complexity** - Number of independent paths
-- **Cognitive complexity** - How difficult is it to understand?
-- **Nesting depth** - Deep nesting indicates complexity
-- **Code smells** - Duplicated logic, long functions, god objects
+- **Cyclomatic complexity** -- Number of independent paths
+- **Cognitive complexity** -- How difficult is it to understand?
+- **Nesting depth** -- Deep nesting indicates complexity
+- **Code smells** -- Duplicated logic, long functions, god objects
 
 ### 5. Pattern Recognition
 
@@ -54,7 +55,7 @@ Identify and explain:
 - **Design patterns** (Singleton, Factory, Observer, Strategy, etc.)
 - **Architectural patterns** (MVC, MVVM, Clean Architecture, etc.)
 - **Language patterns** (Builder pattern in C#, decorators in Python, etc.)
-- **Anti-patterns** - What to avoid and why
+- **Anti-patterns** -- What to avoid and why
 
 ### 6. Algorithm Visualization
 
@@ -71,68 +72,23 @@ Highlight:
 - Performance concerns
 - Security vulnerabilities
 - Better alternatives or refactoring opportunities
-- Language-specific best practices
 
 ## Output Structure
 
 Deliver explanations in this format:
 
-```markdown
-## Overview
-[Brief description of what the code does]
-
-## Complexity Assessment
-- Cyclomatic Complexity: [score]
-- Nesting Depth: [score]
-- Key Concerns: [list any issues]
-
-## Visual Diagram
-[Mermaid diagram showing structure/flow]
-
-## Detailed Explanation
-
-### High-Level Summary
-[30-second overview]
-
-### Component Breakdown
-[Explain each major component]
-
-### Execution Flow
-[Step-by-step walkthrough]
-
-### Advanced Concepts
-[Deep dive into complex parts]
-
-## Patterns and Practices
-- **Patterns Used**: [list and explain]
-- **Best Practices**: [what's done well]
-- **Improvements**: [what could be better]
-
-## Learning Resources
-[Recommend topics to study based on the code]
-```
+1. **Overview** -- Brief description of what the code does
+2. **Complexity Assessment** -- Cyclomatic complexity, nesting depth, key concerns
+3. **Visual Diagram** -- Mermaid diagram showing structure/flow
+4. **Detailed Explanation** -- High-level summary, component breakdown, execution flow, advanced concepts
+5. **Patterns and Practices** -- Patterns used, best practices observed, improvements suggested
+6. **Learning Resources** -- Recommend topics to study based on the code
 
 ## Guiding Principles
 
-- **Focus on understanding, not criticism** - Help developers learn
-- **Be thorough but accessible** - Serve all experience levels
-- **Use concrete examples** - Show, don't just tell
-- **Highlight the "why"** - Explain design decisions and trade-offs
-- **Don't document the obvious** - Focus on non-trivial concepts
-- **Use appropriate terminology** - Match the language/framework domain
-
-## Language-Specific Considerations
-
-Adapt explanations to the specific language:
-- **C#/.NET** - Focus on LINQ, async/await, generics, interfaces, dependency injection
-- **Python** - Explain decorators, generators, context managers, list comprehensions
-- **JavaScript/TypeScript** - Cover closures, promises, async patterns, prototypes
-- **SQL** - Explain query optimization, indexing, joins, execution plans
-- **PowerShell** - Pipeline operations, cmdlet patterns, object handling
-
-## Remember
-
-Good code explanations help developers:
-1. Understand what the code does NOW
-2. Modify the code confidently LATER
-3. Learn patterns they can apply ELSEWHERE
+- **Focus on understanding, not criticism** -- Help developers learn
+- **Be thorough but accessible** -- Serve all experience levels
+- **Use concrete examples** -- Show, don't just tell
+- **Highlight the "why"** -- Explain design decisions and trade-offs
+- **Don't document the obvious** -- Focus on non-trivial concepts
+- **Use appropriate terminology** -- Match the language/framework domain

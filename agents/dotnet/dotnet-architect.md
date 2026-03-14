@@ -2,7 +2,6 @@
 name: dotnet-architect
 description: Design clean, maintainable .NET systems following DDD, Clean Architecture, and SOLID principles
 model: sonnet
-category: engineering
 color: purple
 ---
 

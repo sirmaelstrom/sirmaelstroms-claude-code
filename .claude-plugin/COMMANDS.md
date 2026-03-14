@@ -39,7 +39,7 @@ Commands are also called "skills" in Claude Code's architecture. See [ARCHITECTU
 1. Analyzes current git state (status, diff, branch tracking)
 2. Reviews changes and identifies nature (feature, bug fix, refactoring, etc.)
 3. Stages relevant files for commit
-4. Creates commit with co-authorship: `Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>`
+4. Creates commit with co-authorship: `Co-Authored-By: Claude <noreply@anthropic.com>`
 5. Pushes to remote (with `-u` flag if needed)
 6. Creates pull request with summary, test plan, and Discord embed JSON
 7. Returns PR URL
@@ -223,38 +223,6 @@ Generates appropriate documentation based on context:
 **Notes**:
 - Suggests linter configuration if not already set up
 - Recommends pre-commit hooks and CI/CD integration
-
----
-
-### `/code-optimize`
-
-**Description**: Analyze and optimize code for performance, memory, and efficiency.
-
-**Usage**:
-```bash
-/code-optimize
-```
-
-**Expected Behavior**:
-1. Profiles code to identify bottlenecks (requires measurement first)
-2. Analyzes hot paths (loops, frequently called methods, database queries)
-3. Provides language-specific optimizations:
-   - C#: Span<T>, async/await, LINQ alternatives, StringBuilder, ValueTask
-   - Python: List comprehensions, generators, cached lookups
-   - JavaScript: Debouncing, memoization, lazy loading
-   - SQL: Indexes, batching, query optimization
-4. Provides before/after benchmarks
-5. Discusses trade-offs (speed vs. memory vs. maintainability)
-
-**Philosophy**:
-- Measure first, optimize second
-- Focus on actual bottlenecks
-- Maintain readability
-- Benchmark improvements
-
-**Notes**:
-- Recommends profiling tools (BenchmarkDotNet, dotnet-trace, Chrome DevTools, etc.)
-- Only optimizes code proven to be bottlenecks
 
 ---
 

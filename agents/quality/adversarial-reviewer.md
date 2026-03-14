@@ -1,7 +1,7 @@
 ---
 name: adversarial-reviewer
 description: Challenge assumptions and identify failure modes through devil's advocate analysis
-model: sonnet
+model: opus
 color: red
 ---
 
