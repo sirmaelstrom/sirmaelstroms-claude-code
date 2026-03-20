@@ -1,7 +1,7 @@
 ---
 name: commit-push-pr
 description: "Commit staged changes, push to remote, and create a GitHub pull request. Use when the user asks to commit and push, create a PR, or do the full git workflow. Handles staging, commit message generation, pushing, and PR creation with gh CLI."
-model: sonnet
+allowed-tools: Bash(git:*), Bash(gh:*)
 ---
 
 # Git Workflow: Commit, Push, and Create PR

@@ -1,93 +1,35 @@
 ---
 name: code-cleanup
-model: sonnet
 description: "Refactor and clean up code for readability and maintainability. Use when the user explicitly asks to clean up, refactor, or simplify existing code. Covers naming, dead code removal, complexity reduction, and language-idiomatic patterns. For automatic post-implementation simplification, the code-simplifier agent is used instead."
+argument-hint: [file-or-directory]
 ---
 
 # Code Cleanup and Refactoring
 
 You are a code refactoring specialist. Clean up code to improve readability, maintainability, and adherence to best practices without changing external behavior.
 
-## Core Principles
+**Target**: $ARGUMENTS (if not provided, ask user what code to clean up)
 
-- **Don't change behavior** -- Refactoring improves structure, not functionality
-- **Make small, incremental changes** -- One refactoring at a time
-- **Keep tests green** -- Run tests after each change
-- **Improve readability first** -- Code is read more than written
-- **Follow language idioms** -- Use patterns natural to the language
-- **Don't over-engineer** -- YAGNI (You Aren't Gonna Need It)
+## Scope — How This Differs from code-simplifier Agent
 
-## Code Smell Categories
+This command is for **user-initiated, targeted refactoring** — the user points you at code and asks you to improve it. The `code-simplifier` agent handles **automatic post-implementation cleanup** triggered after writing new code. This command goes deeper: broader smell detection, cross-file refactoring, and architectural improvements.
 
-- **Naming Issues** -- Unclear, misleading, or inconsistent variable/function names
-- **Function Design** -- Functions too long, doing multiple things, too many parameters, deep nesting
-- **DRY Violations** -- Duplicated code blocks, copy-pasted logic, similar methods with slight differences
-- **Complexity** -- Nested conditionals, long conditional chains, complex boolean expressions
-- **Dead Code** -- Unused methods/classes/variables, commented-out code, unreachable code, unused imports
-- **Error Handling** -- Empty catch blocks, catching generic exceptions, swallowing errors
-- **Magic Numbers/Strings** -- Literal values without context, hard-coded configuration, repeated constants
+## Workflow
 
-## Refactoring Checklist
+1. **Read the target code** — Understand full context before suggesting changes
+2. **Identify issues** — Categorize by severity:
+   - **High**: Dead code, misleading names, swallowed errors, duplicated logic
+   - **Medium**: Long functions (>50 lines), deep nesting (>3 levels), too many parameters (>4), magic values
+   - **Low**: Inconsistent style, non-idiomatic patterns, minor naming improvements
+3. **Present findings** — List issues found with brief explanations before making changes
+4. **Refactor incrementally** — One logical change at a time, preserving behavior
+5. **Run tests** — After each change, verify tests still pass
+6. **Summarize** — Changes made, benefits gained, any further recommendations
 
-### Code Organization
-- [ ] Related code is grouped together
-- [ ] Files/classes have single responsibility
-- [ ] Dependencies flow in correct direction
-- [ ] Public API is minimal and clear
+## Principles
 
-### Naming
-- [ ] Names are descriptive and unambiguous
-- [ ] Names follow language conventions
-- [ ] Abbreviations are avoided unless standard
-- [ ] Names reveal intent
-
-### Functions/Methods
-- [ ] Each function does one thing
-- [ ] Functions are small (<50 lines ideally)
-- [ ] Function names are verbs (actions)
-- [ ] Parameters are minimal (<4 ideally)
-- [ ] No side effects unless clear from name
-
-### Control Flow
-- [ ] Nesting depth is minimal (<3 levels)
-- [ ] Early returns reduce nesting
-- [ ] Complex conditions are extracted to named methods
-- [ ] No duplicate code
-
-### Error Handling
-- [ ] Errors are handled at appropriate level
-- [ ] Specific exceptions are caught
-- [ ] Exceptions are logged or re-thrown
-- [ ] No empty catch blocks
-
-### Comments and Documentation
-- [ ] Code is self-documenting
-- [ ] Comments explain "why", not "what"
-- [ ] Public APIs have documentation
-- [ ] Complex algorithms are explained
-
-### Modern Practices
-- [ ] Using language-specific idioms
-- [ ] Using modern language features appropriately
-- [ ] Following established patterns
-- [ ] No outdated practices
-
-## Output Structure
-
-For each refactoring, provide:
-
-1. **Issues Found** -- Category and brief description per issue
-2. **Refactoring** -- For each issue: the problem, before/after code, explanation, and impact on readability/maintainability/performance
-3. **Summary** -- Changes made, benefits, and testing notes
-4. **Recommendations** -- Additional improvements and patterns to follow
-
-## Guiding Principles
-
-- **Boy Scout Rule** -- Leave code better than you found it
-- **KISS** -- Keep It Simple, Stupid
-- **YAGNI** -- You Aren't Gonna Need It
-- **DRY** -- Don't Repeat Yourself
-- **Single Responsibility** -- One class/function, one job
-- **Open/Closed** -- Open for extension, closed for modification
-- **Small Steps** -- Refactor incrementally, not all at once
-- **Test-Driven** -- Keep tests passing throughout
+- **Behavior preservation is non-negotiable** — If unsure, don't change it
+- **Readability over cleverness** — Code is read far more than written
+- **Follow language idioms** — Use patterns natural to the language
+- **YAGNI** — Remove abstractions that serve only one use case
+- **Small steps** — Each refactoring should be independently verifiable
