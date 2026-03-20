@@ -2,7 +2,6 @@
 name: build-test
 description: Build and test .NET solution/project with error reporting
 argument-hint: [path-to-sln-or-csproj]
-model: sonnet
 allowed-tools: Bash(dotnet build:*), Bash(dotnet test:*)
 ---
 

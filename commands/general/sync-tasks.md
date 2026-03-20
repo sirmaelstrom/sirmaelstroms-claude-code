@@ -1,6 +1,5 @@
 ---
 name: sync-tasks
-model: sonnet
 description: "Synchronize project TODO.md files with central TASKS.md for unified task tracking. Use when the user runs /sync-tasks or asks to synchronize, update, or check status of project tasks across repositories."
 ---
 
