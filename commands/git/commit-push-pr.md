@@ -17,7 +17,11 @@ Follow these steps in order:
 Run these commands in parallel to understand the current state:
 - `git status` - See all untracked files (NEVER use -uall flag)
 - `git diff` - See both staged and unstaged changes
-- Check if current branch tracks a remote branch and is up to date
+- `git log --oneline origin/main..HEAD` (or the appropriate base branch) - See ALL commits on this branch that are not yet on main
+- `git diff origin/main...HEAD` - See the full diff of ALL changes since the branch diverged from main
+- Check if current branch tracks a remote branch and is up to date with the remote
+
+**CRITICAL:** The PR summary must reflect ALL commits visible in `git log`, not just the most recent commit. If you skip `git log` and `git diff origin/main...HEAD`, your PR description will be incomplete.
 
 ### 2. Review Changes
 
@@ -63,7 +67,15 @@ EOF
 
 ### 5. Push to Remote
 
-Push the commit to the remote repository:
+**Pre-push safety check (required):** Run `git branch --show-current` to identify the current branch.
+
+If the current branch is `main` or `master`:
+- **Do not push yet.** Stop and warn the user explicitly:
+  > "You are about to push directly to `main`/`master`. This is risky — it bypasses code review and can affect production. The safer path is to create a feature branch and open a PR instead."
+- Suggest: `git checkout -b <descriptive-branch-name>` as the recommended next step.
+- Wait for the user to explicitly confirm they want to push directly to main before proceeding. This check applies even if the user's original request was to push directly — the concern must be raised first.
+
+If on a feature branch, push to the remote:
 - Check if branch needs `-u` flag for first push
 - Use `git push -u origin <branch-name>` if setting upstream
 - Use `git push` if upstream already exists
