@@ -85,17 +85,11 @@ else
         EXIT_CODE=2
     fi
 
-    # Verify TASKS.md is in current directory (no parent paths)
-    if [[ "$(dirname "TASKS.md")" != "." ]]; then
-        ERRORS+=("TASKS.md must be in current working directory")
-        EXIT_CODE=2
-    fi
-
-    # Check if writable (only if it exists and is not a symlink)
-    if [[ $TASKS_MD_IS_SYMLINK == false ]] && [[ -w "TASKS.md" ]]; then
-        TASKS_MD_IS_WRITABLE=true
-    else
-        if [[ $TASKS_MD_IS_SYMLINK == false ]]; then
+    # Check if writable (only if not a symlink)
+    if [[ $TASKS_MD_IS_SYMLINK == false ]]; then
+        if [[ -w "TASKS.md" ]]; then
+            TASKS_MD_IS_WRITABLE=true
+        else
             ERRORS+=("TASKS.md is not writable")
             EXIT_CODE=2
         fi
@@ -123,91 +117,69 @@ if [[ $EXIT_CODE -ne 2 ]]; then
 
     TODO_FILES_DISCOVERED=${#DISCOVERED_TODOS[@]}
 
+    reject() {
+        local todo_file="$1" reason="$2" msg="$3"
+        WARNINGS+=("Skipping $todo_file ($msg)")
+        REJECTED_FILES+=("$todo_file||rejected|$reason")
+        TODO_FILES_REJECTED=$((TODO_FILES_REJECTED + 1))
+    }
+
     # Validate each discovered TODO.md file
     for todo_file in "${DISCOVERED_TODOS[@]}"; do
-        REJECT_REASON=""
-        FILE_STATUS="valid"
+        size=""
 
         # SECURITY: Reject symlinks
         if [[ -L "$todo_file" ]]; then
-            REJECT_REASON="symlink"
-            FILE_STATUS="rejected"
-            WARNINGS+=("Skipping $todo_file (symlink not allowed)")
-            TODO_FILES_REJECTED=$((TODO_FILES_REJECTED + 1))
+            reject "$todo_file" "symlink" "symlink not allowed"
+            continue
         fi
 
         # SECURITY: Verify it's a regular file
-        if [[ -n "$REJECT_REASON" ]] || [[ ! -f "$todo_file" ]]; then
-            if [[ -z "$REJECT_REASON" ]]; then
-                REJECT_REASON="not_regular_file"
-                FILE_STATUS="rejected"
-                WARNINGS+=("Skipping $todo_file (not a regular file)")
-                TODO_FILES_REJECTED=$((TODO_FILES_REJECTED + 1))
-            fi
+        if [[ ! -f "$todo_file" ]]; then
+            reject "$todo_file" "not_regular_file" "not a regular file"
+            continue
         fi
 
         # SECURITY: Verify file is within workspace
-        if [[ -z "$REJECT_REASON" ]]; then
-            realpath_file=$(realpath "$todo_file" 2>/dev/null || echo "")
-            realpath_cwd=$(realpath "." 2>/dev/null || echo "")
-
-            if [[ -z "$realpath_file" ]] || [[ -z "$realpath_cwd" ]]; then
-                REJECT_REASON="path_resolution_failed"
-                FILE_STATUS="rejected"
-                WARNINGS+=("Skipping $todo_file (path resolution failed)")
-                TODO_FILES_REJECTED=$((TODO_FILES_REJECTED + 1))
-            elif [[ "$realpath_file" != "$realpath_cwd"/* ]]; then
-                REJECT_REASON="outside_workspace"
-                FILE_STATUS="rejected"
-                WARNINGS+=("Skipping $todo_file (outside workspace)")
-                TODO_FILES_REJECTED=$((TODO_FILES_REJECTED + 1))
-            fi
+        realpath_file=$(realpath "$todo_file" 2>/dev/null || echo "")
+        realpath_cwd=$(realpath "." 2>/dev/null || echo "")
+        if [[ -z "$realpath_file" ]] || [[ -z "$realpath_cwd" ]]; then
+            reject "$todo_file" "path_resolution_failed" "path resolution failed"
+            continue
+        elif [[ "$realpath_file" != "$realpath_cwd"/* ]]; then
+            reject "$todo_file" "outside_workspace" "outside workspace"
+            continue
         fi
 
         # SECURITY: Check file size
-        if [[ -z "$REJECT_REASON" ]]; then
-            if [[ "$(uname)" == "Darwin" ]]; then
-                size=$(stat -f %z "$todo_file" 2>/dev/null || echo "")
-            else
-                size=$(stat -c %s "$todo_file" 2>/dev/null || echo "")
-            fi
-
-            if [[ -z "$size" ]] || [[ ! "$size" =~ ^[0-9]+$ ]]; then
-                REJECT_REASON="size_unknown"
-                FILE_STATUS="rejected"
-                WARNINGS+=("Skipping $todo_file (cannot determine file size)")
-                TODO_FILES_REJECTED=$((TODO_FILES_REJECTED + 1))
-            elif (( size > MAX_FILE_SIZE )); then
-                REJECT_REASON="too_large"
-                FILE_STATUS="rejected"
-                WARNINGS+=("Skipping $todo_file (>100KB, TODO.md should be small)")
-                TODO_FILES_REJECTED=$((TODO_FILES_REJECTED + 1))
-            else
-                # Check total cumulative size
-                new_total=$((TOTAL_SIZE + size))
-                if (( new_total > MAX_TOTAL_SIZE )); then
-                    REJECT_REASON="total_size_exceeded"
-                    FILE_STATUS="rejected"
-                    WARNINGS+=("Skipping $todo_file (total size would exceed 5MB limit)")
-                    WARNINGS+=("Processing stopped at ${TODO_FILES_VALIDATED} validated files")
-                    TODO_FILES_REJECTED=$((TODO_FILES_REJECTED + 1))
-                    # Break out of loop, we've hit the limit
-                    break
-                else
-                    TOTAL_SIZE=$new_total
-                fi
-            fi
-        fi
-
-        # Add to appropriate list
-        if [[ "$FILE_STATUS" == "valid" ]]; then
-            VALIDATED_FILES+=("$todo_file|$size|valid")
-            TODO_FILES_VALIDATED=$((TODO_FILES_VALIDATED + 1))
+        if [[ "$(uname)" == "Darwin" ]]; then
+            size=$(stat -f %z "$todo_file" 2>/dev/null || echo "")
         else
-            REJECTED_FILES+=("$todo_file|$size|rejected|$REJECT_REASON")
+            size=$(stat -c %s "$todo_file" 2>/dev/null || echo "")
         fi
 
-        # Check if we've exceeded max file count
+        if [[ -z "$size" ]] || [[ ! "$size" =~ ^[0-9]+$ ]]; then
+            reject "$todo_file" "size_unknown" "cannot determine file size"
+            continue
+        elif (( size > MAX_FILE_SIZE )); then
+            reject "$todo_file" "too_large" ">100KB, TODO.md should be small"
+            continue
+        fi
+
+        # Check total cumulative size
+        new_total=$((TOTAL_SIZE + size))
+        if (( new_total > MAX_TOTAL_SIZE )); then
+            WARNINGS+=("Skipping $todo_file (total size would exceed 5MB limit)")
+            WARNINGS+=("Processing stopped at ${TODO_FILES_VALIDATED} validated files")
+            REJECTED_FILES+=("$todo_file|$size|rejected|total_size_exceeded")
+            TODO_FILES_REJECTED=$((TODO_FILES_REJECTED + 1))
+            break
+        fi
+
+        TOTAL_SIZE=$new_total
+        VALIDATED_FILES+=("$todo_file|$size|valid")
+        TODO_FILES_VALIDATED=$((TODO_FILES_VALIDATED + 1))
+
         if (( TODO_FILES_VALIDATED >= MAX_FILES )); then
             WARNINGS+=("Reached maximum file limit ($MAX_FILES files), stopping discovery")
             break
@@ -268,7 +240,7 @@ for file_info in "${REJECTED_FILES[@]}"; do
     FIRST=false
     echo -n "      {"
     echo -n "\"path\": \"$path\", "
-    echo -n "\"size\": $size, "
+    echo -n "\"size\": ${size:-null}, "
     echo -n "\"status\": \"$status\", "
     echo -n "\"reason\": \"$reason\""
     echo -n "}"

@@ -1,3 +1,6 @@
+You are a Claude Code agent with the following skill loaded:
+
+<skill>
 ---
 name: code-cleanup
 description: "Refactor and clean up code for readability and maintainability. Use when the user explicitly asks to clean up, refactor, or simplify existing code. Covers naming, dead code removal, complexity reduction, and language-idiomatic patterns. For automatic post-implementation simplification, the code-simplifier agent is used instead."
@@ -21,12 +24,12 @@ This command is for **user-initiated, targeted refactoring** — the user points
 
 ## Workflow
 
-1. **Read the target code** — Understand full context before suggesting changes
+1. **Read the target code** — Read all relevant files fully. **Output: nothing.** Do not produce analysis, findings, or suggestions until reading is complete.
 2. **Identify issues** — Categorize by severity:
-   - **High**: Dead code, misleading names, swallowed errors, duplicated logic
+   - **High**: Dead code, misleading names, swallowed errors (empty catch blocks, catch-and-ignore, TODO-in-catch), duplicated logic
    - **Medium**: Long functions (>50 lines), deep nesting (>3 levels), too many parameters (>4), magic values
    - **Low**: Inconsistent style, non-idiomatic patterns, minor naming improvements
-3. **Present findings** — List issues found with brief explanations before making changes
+3. **Present findings** — List all issues found with brief explanations. **Output: findings list only — do not make any code edits in this step.** Proceed to step 4 only after this response is complete.
 4. **Refactor incrementally** — One logical change at a time, preserving behavior
 5. **Run tests** — After each change, verify tests still pass
 6. **Summarize** — Changes made, benefits gained, any further recommendations
@@ -38,3 +41,35 @@ This command is for **user-initiated, targeted refactoring** — the user points
 - **Follow language idioms** — Use patterns natural to the language
 - **YAGNI** — Remove abstractions that serve only one use case
 - **Small steps** — Each refactoring should be independently verifiable
+
+</skill>
+
+The user has invoked the skill with this input:
+
+/code-cleanup
+Target: src/services/api-client.ts
+ File contents:
+```typescript
+async function fetchData(url: string) {
+  try {
+    const resp = await fetch(url);
+    const data = await resp.json();
+    return data;
+  } catch (e) {
+    // TODO: handle error
+    return null;
+  }
+}
+ async function saveData(url: string, payload: any) {
+  try {
+    await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
+  } catch (e) {}
+}
+```
+
+Project context: heathdev-observatory
+
+
+Execute the skill fully. Produce the complete output as specified in the skill's output schema.
+Do NOT ask clarifying questions — use your best judgment and the context provided.
+Simulate any commands you would run and produce realistic output.

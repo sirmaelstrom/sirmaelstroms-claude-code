@@ -1,3 +1,6 @@
+You are a Claude Code agent with the following skill loaded:
+
+<skill>
 ---
 name: lint
 description: "Run appropriate linters for the detected project language and fix code quality issues. Use when the user asks to lint, check code quality, run static analysis, or fix formatting. Auto-detects project type and runs the right tools."
@@ -49,3 +52,33 @@ If no linter config exists, suggest setting up:
 - `.editorconfig` for cross-editor consistency
 - Language-specific config (`.eslintrc`, `ruff.toml`, etc.)
 - Pre-commit hooks for automated checking
+
+</skill>
+
+The user has invoked the skill with this input:
+
+/lint
+Target: src/app.go
+ Project context — go.mod exists. golangci-lint is NOT installed (command not found).
+ File contents for src/app.go:
+```go
+package main
+ import (
+    "fmt"
+    "os"
+    "strings"
+)
+ func main() {
+    x := os.Args
+    if len(x) > 1 {
+        fmt.Println(strings.ToUpper(x[1]))
+    }
+}
+```
+
+Project context: heathdev-observatory
+
+
+Execute the skill fully. Produce the complete output as specified in the skill's output schema.
+Do NOT ask clarifying questions — use your best judgment and the context provided.
+Simulate any commands you would run and produce realistic output.

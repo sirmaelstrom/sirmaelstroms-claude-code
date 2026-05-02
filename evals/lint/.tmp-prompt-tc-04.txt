@@ -1,3 +1,6 @@
+You are a Claude Code agent with the following skill loaded:
+
+<skill>
 ---
 name: lint
 description: "Run appropriate linters for the detected project language and fix code quality issues. Use when the user asks to lint, check code quality, run static analysis, or fix formatting. Auto-detects project type and runs the right tools."
@@ -49,3 +52,53 @@ If no linter config exists, suggest setting up:
 - `.editorconfig` for cross-editor consistency
 - Language-specific config (`.eslintrc`, `ruff.toml`, etc.)
 - Pre-commit hooks for automated checking
+
+</skill>
+
+The user has invoked the skill with this input:
+
+/lint
+Target: Services/UserService.cs
+ Project context — MyApp.csproj exists. dotnet CLI is available.
+ File contents for Services/UserService.cs:
+```csharp
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+ namespace MyApp.Services
+{
+    public class UserService
+    {
+        private string connString;
+         public UserService(string connectionString)
+        {
+            connString = connectionString;
+        }
+         public async Task<object> GetUser(int id)
+        {
+            try {
+                // TODO: implement
+                return null;
+            }
+            catch (Exception ex) {
+                return null;
+            }
+        }
+         public void ProcessUsers(List<object> users) {
+            for (int i = 0; i < users.Count; i++) {
+                var u = users[i];
+                Console.WriteLine(u.ToString());
+            }
+        }
+    }
+}
+```
+
+Project context: heathdev-observatory
+
+
+Execute the skill fully. Produce the complete output as specified in the skill's output schema.
+Do NOT ask clarifying questions — use your best judgment and the context provided.
+Simulate any commands you would run and produce realistic output.

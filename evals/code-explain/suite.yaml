@@ -1,0 +1,302 @@
+# Eval Suite: code-explain
+# Tests whether the skill produces correct explanations: layered depth,
+# diagrams, complexity analysis, pattern identification, and audience matching.
+#
+# Tiers:
+#   smoke  — run every iteration for fast signal (3 cases)
+#   verify — run only when smoke improves (3-4 cases)
+
+skill: code-explain
+created_at: "2026-04-29T05:00:00Z"
+model: sonnet
+iterations: 10
+timeout_per_iteration_minutes: 10
+
+test_cases:
+  # --- SMOKE TIER ---
+
+  # Scenario 1: "What does this do?" — high-level overview
+  - id: tc-01
+    tier: smoke
+    description: "Simple function — user asks what it does, expects overview"
+    input: |
+      /code-explain
+      What does this do?
+
+      ```typescript
+      export async function rotateSession(
+        db: DatabaseSync,
+        channelId: string,
+        maxMessages: number = 50
+      ): Promise<string> {
+        const current = db.prepare(
+          'SELECT id, message_count FROM sessions WHERE channel_id = ? AND active = 1'
+        ).get(channelId);
+
+        if (current && current.message_count < maxMessages) {
+          return current.id;
+        }
+
+        if (current) {
+          db.prepare('UPDATE sessions SET active = 0, ended_at = ? WHERE id = ?')
+            .run(new Date().toISOString(), current.id);
+        }
+
+        const newId = crypto.randomUUID();
+        db.prepare(
+          'INSERT INTO sessions (id, channel_id, active, started_at, message_count) VALUES (?, ?, 1, ?, 0)'
+        ).run(newId, channelId, new Date().toISOString());
+
+        return newId;
+      }
+      ```
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output contains an overview section explaining the function's purpose"
+        - "Output is structured with clear sections or headings"
+      quality:
+        - "The explanation identifies this as a session rotation function"
+        - "The explanation covers the three paths: reuse current, rotate, or create new"
+        - "The explanation does NOT over-explain obvious syntax like variable declarations"
+      instruction_adherence:
+        - "The depth matches 'what does this do' — high-level, not line-by-line"
+        - "The output follows the skill's output structure (Overview first)"
+
+  # Scenario 2: "Walk me through this" — step-by-step execution flow
+  - id: tc-02
+    tier: smoke
+    description: "Complex algorithm — user asks for a walkthrough"
+    input: |
+      /code-explain
+      Walk me through this debounce implementation:
+
+      ```typescript
+      function debounce<T extends (...args: any[]) => any>(
+        fn: T,
+        delay: number,
+        options: { leading?: boolean; maxWait?: number } = {}
+      ): (...args: Parameters<T>) => void {
+        let timeoutId: ReturnType<typeof setTimeout> | null = null;
+        let lastCallTime: number | null = null;
+        let lastInvokeTime = 0;
+
+        function invoke(args: Parameters<T>) {
+          lastInvokeTime = Date.now();
+          fn(...args);
+        }
+
+        return function (...args: Parameters<T>) {
+          const now = Date.now();
+          const isFirstCall = lastCallTime === null;
+          lastCallTime = now;
+
+          if (options.leading && isFirstCall) {
+            invoke(args);
+          }
+
+          if (timeoutId !== null) {
+            clearTimeout(timeoutId);
+          }
+
+          if (options.maxWait && now - lastInvokeTime >= options.maxWait) {
+            invoke(args);
+          } else {
+            timeoutId = setTimeout(() => {
+              if (!options.leading || !isFirstCall) {
+                invoke(args);
+              }
+              timeoutId = null;
+              lastCallTime = null;
+            }, delay);
+          }
+        };
+      }
+      ```
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output walks through execution flow step by step"
+        - "Output contains a diagram (Mermaid flowchart or sequence diagram)"
+      quality:
+        - "The walkthrough explains the leading edge option behavior"
+        - "The walkthrough explains the maxWait option behavior"
+        - "The walkthrough traces what happens on repeated calls within the delay window"
+        - "Concrete examples with sample data are used to illustrate timing"
+      instruction_adherence:
+        - "The depth matches 'walk me through' — step-by-step, not just overview"
+        - "The explanation covers the non-obvious parts (closure state, timer management)"
+
+  # Scenario 3: No target — skill should ask
+  - id: tc-03
+    tier: smoke
+    description: "No code provided — skill should ask what to explain"
+    input: |
+      /code-explain
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output asks the user what code to explain"
+      quality:
+        - "The skill does NOT fabricate an explanation without code"
+        - "The prompt is helpful (suggests providing a file path or pasting code)"
+      instruction_adherence:
+        - "The skill follows the $ARGUMENTS pattern: 'if not provided, ask user'"
+
+  # --- VERIFY TIER ---
+
+  # Scenario 4: "How does this work?" — deep dive with complexity analysis
+  - id: tc-04
+    tier: verify
+    description: "Complex data structure — user wants deep understanding"
+    input: |
+      /code-explain
+      How does this work?
+
+      ```python
+      class LRUCache:
+          def __init__(self, capacity: int):
+              self.capacity = capacity
+              self.cache = {}
+              self.head = Node(0, 0)
+              self.tail = Node(0, 0)
+              self.head.next = self.tail
+              self.tail.prev = self.head
+
+          def get(self, key: int) -> int:
+              if key in self.cache:
+                  node = self.cache[key]
+                  self._remove(node)
+                  self._add(node)
+                  return node.val
+              return -1
+
+          def put(self, key: int, value: int) -> None:
+              if key in self.cache:
+                  self._remove(self.cache[key])
+              node = Node(key, value)
+              self._add(node)
+              self.cache[key] = node
+              if len(self.cache) > self.capacity:
+                  lru = self.head.next
+                  self._remove(lru)
+                  del self.cache[lru.key]
+
+          def _remove(self, node):
+              node.prev.next = node.next
+              node.next.prev = node.prev
+
+          def _add(self, node):
+              prev = self.tail.prev
+              prev.next = node
+              node.prev = prev
+              node.next = self.tail
+              self.tail.prev = node
+      ```
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output contains a complexity analysis section (Big O)"
+        - "Output contains a diagram illustrating the doubly-linked list structure"
+      quality:
+        - "The explanation identifies this as an LRU cache using a hash map + doubly-linked list"
+        - "Big O analysis correctly states O(1) for both get and put operations"
+        - "The explanation covers why a doubly-linked list is needed (O(1) removal)"
+        - "The design pattern (combining two data structures for complementary strengths) is identified"
+      instruction_adherence:
+        - "The depth matches 'how does this work' — deep dive with trade-offs"
+        - "The output includes the Patterns section per the skill spec"
+
+  # Scenario 5: Concerns and edge cases
+  - id: tc-05
+    tier: verify
+    description: "Code with subtle bugs — skill should surface concerns"
+    input: |
+      /code-explain
+      Explain this rate limiter:
+
+      ```typescript
+      class RateLimiter {
+        private tokens: number;
+        private lastRefill: number;
+
+        constructor(
+          private maxTokens: number,
+          private refillRate: number // tokens per second
+        ) {
+          this.tokens = maxTokens;
+          this.lastRefill = Date.now();
+        }
+
+        tryConsume(cost: number = 1): boolean {
+          this.refill();
+          if (this.tokens >= cost) {
+            this.tokens -= cost;
+            return true;
+          }
+          return false;
+        }
+
+        private refill() {
+          const now = Date.now();
+          const elapsed = (now - this.lastRefill) / 1000;
+          this.tokens = Math.min(
+            this.maxTokens,
+            this.tokens + elapsed * this.refillRate
+          );
+          this.lastRefill = now;
+        }
+      }
+      ```
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output contains a concerns or potential issues section"
+      quality:
+        - "The explanation identifies this as a token bucket rate limiter"
+        - "Thread safety / concurrency concerns are raised (no synchronization)"
+        - "The floating-point token accumulation is noted as a potential precision issue"
+      instruction_adherence:
+        - "The Concerns section is included per the skill spec"
+        - "The explanation focuses on understanding, not criticism"
+
+  # Scenario 6: Simple code — don't over-explain
+  - id: tc-06
+    tier: verify
+    description: "Trivial utility — skill should be proportionally brief"
+    input: |
+      /code-explain
+      What does this do?
+
+      ```typescript
+      export const clamp = (value: number, min: number, max: number): number =>
+        Math.max(min, Math.min(max, value));
+      ```
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output is concise — not more than a few paragraphs"
+      quality:
+        - "The explanation correctly identifies this as a clamp/bound function"
+        - "The explanation is proportionally brief — no multi-section deep dive for a one-liner"
+        - "The skill does NOT generate a Mermaid diagram for trivial code"
+      instruction_adherence:
+        - "The skill skips the obvious per its principles"
+        - "Complexity analysis is either omitted or noted as O(1) briefly"
+
+# Scoring notes:
+# - All assertions use LLM-as-judge with binary yes/no framing
+# - Categories: format (structural), quality (substance), instruction_adherence (rules)
+# - Tiers: smoke (fast signal), verify (regression check on promising mutations)

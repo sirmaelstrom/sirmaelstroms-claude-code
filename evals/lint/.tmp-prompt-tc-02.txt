@@ -1,3 +1,6 @@
+You are a Claude Code agent with the following skill loaded:
+
+<skill>
 ---
 name: lint
 description: "Run appropriate linters for the detected project language and fix code quality issues. Use when the user asks to lint, check code quality, run static analysis, or fix formatting. Auto-detects project type and runs the right tools."
@@ -25,8 +28,14 @@ You are a code quality specialist. Detect the project type, run appropriate lint
 
 2. **Check what's installed** before running — don't assume tools are available.
    - Run a version check (e.g., `eslint --version`, `ruff --version`, `cargo clippy --version`) for each tool you intend to use.
-   - If the tool is not found or returns an error, **stop and report**: say which tool is missing, why it was expected, and give the exact install command.
+   - **If found** → note the version and proceed to step 3.
+   - **If not found** → output this exact pattern, then **skip that tool entirely**. Do NOT proceed to step 3 for it:
+     ```
+     ⚠️ `<tool>` not found. Expected because `<indicator file>` was detected.
+     Install: <exact install command>
+     ```
    - **NEVER fabricate linter output for a tool that is not confirmed installed.** Invented warnings or errors are worse than no output.
+   - **NEVER run step 3 for any tool that did not pass the version check.**
 
 3. **Run linters** and capture output.
 
@@ -49,3 +58,37 @@ If no linter config exists, suggest setting up:
 - `.editorconfig` for cross-editor consistency
 - Language-specific config (`.eslintrc`, `ruff.toml`, etc.)
 - Pre-commit hooks for automated checking
+
+</skill>
+
+The user has invoked the skill with this input:
+
+/lint
+Target: src/processor.py
+ Project context — pyproject.toml exists. ruff is installed.
+ File contents for src/processor.py:
+```python
+import os
+import sys
+import json
+from typing import List, Dict, Any
+ def process_data(data,config=None):
+    results=[]
+    for i in range(0,len(data)):
+        item=data[i]
+        if item['status']=='active':
+            if item['score']>80:
+                if config!=None:
+                    results.append({'name':item['name'],'score':item['score'],'level':'high'})
+                else:
+                    results.append({'name':item['name'],'score':item['score']})
+    x = 42
+    return results
+```
+
+Project context: heathdev-observatory
+
+
+Execute the skill fully. Produce the complete output as specified in the skill's output schema.
+Do NOT ask clarifying questions — use your best judgment and the context provided.
+Simulate any commands you would run and produce realistic output.

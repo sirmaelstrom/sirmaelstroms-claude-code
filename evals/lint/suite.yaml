@@ -1,0 +1,297 @@
+# Eval Suite: lint
+# Tests whether the skill correctly detects project types, runs appropriate linters,
+# categorizes issues by priority, and reports results clearly.
+#
+# Tiers:
+#   smoke  — run every iteration for fast signal (3 cases)
+#   verify — run only when smoke improves (3 cases)
+
+skill: lint
+created_at: "2026-04-29T01:00:00Z"
+model: sonnet
+iterations: 10
+timeout_per_iteration_minutes: 10
+
+test_cases:
+  # --- SMOKE TIER ---
+
+  # Scenario 1: TypeScript project with ESLint issues
+  - id: tc-01
+    tier: smoke
+    description: "TypeScript project — detects language, runs ESLint, categorizes issues"
+    input: |
+      /lint
+      Target: src/services/auth.ts
+
+      Project context — package.json exists with these devDependencies:
+        "eslint": "^9.0.0",
+        "prettier": "^3.2.0",
+        "@typescript-eslint/parser": "^7.0.0"
+
+      File contents for src/services/auth.ts:
+      ```typescript
+      import { Request, Response } from 'express';
+      import { Logger } from '../utils/logger';
+      import * as fs from 'fs';
+
+      var token: any = null;
+
+      export function authenticate(req: Request, res: Response) {
+        let x = req.headers['authorization']
+        if(x == undefined) {
+          res.status(401).send('unauthorized')
+          return
+        }
+        token = x;
+        var decoded = Buffer.from(x.split(' ')[1], 'base64').toString()
+        eval('var user = ' + decoded)
+        res.json({ success: true })
+      }
+      ```
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output identifies the project as JavaScript/TypeScript"
+        - "Output references ESLint as the linter to use"
+        - "Issues are categorized by priority levels"
+      quality:
+        - "The eval() call is identified as a security vulnerability (fix immediately)"
+        - "The 'any' type annotation on token is identified as a type issue"
+        - "The unused import (Logger, fs) is identified"
+        - "The use of 'var' instead of 'const/let' is flagged"
+        - "The loose equality (==) is flagged"
+      instruction_adherence:
+        - "Security issues are categorized as 'fix immediately' priority"
+        - "Unused imports are categorized as 'fix soon' priority"
+        - "The report includes issue counts by severity"
+
+  # Scenario 2: Python project with ruff
+  - id: tc-02
+    tier: smoke
+    description: "Python project — detects pyproject.toml, suggests ruff"
+    input: |
+      /lint
+      Target: src/processor.py
+
+      Project context — pyproject.toml exists. ruff is installed.
+
+      File contents for src/processor.py:
+      ```python
+      import os
+      import sys
+      import json
+      from typing import List, Dict, Any
+
+      def process_data(data,config=None):
+          results=[]
+          for i in range(0,len(data)):
+              item=data[i]
+              if item['status']=='active':
+                  if item['score']>80:
+                      if config!=None:
+                          results.append({'name':item['name'],'score':item['score'],'level':'high'})
+                      else:
+                          results.append({'name':item['name'],'score':item['score']})
+          x = 42
+          return results
+      ```
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output identifies the project as Python"
+        - "Output references ruff as the preferred linter"
+      quality:
+        - "Unused imports (os, sys, json) are identified"
+        - "Missing spaces around operators are flagged as formatting issues"
+        - "The unused variable x is identified"
+        - "Deep nesting is noted as a code smell"
+        - "Comparison to None using != instead of 'is not' is flagged"
+      instruction_adherence:
+        - "Unused imports and variables are categorized as 'fix soon'"
+        - "Formatting issues are categorized as 'nice to have'"
+        - "The skill checks what tools are installed before running"
+
+  # Scenario 3: No target — lint from current directory
+  - id: tc-03
+    tier: smoke
+    description: "No target specified — skill should lint from current directory"
+    input: |
+      /lint
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output indicates it will lint from the current directory"
+      quality:
+        - "The skill attempts to detect the project type from files present"
+        - "The skill does NOT refuse to run — it proceeds with detection"
+      instruction_adherence:
+        - "The skill follows the $ARGUMENTS fallback: 'lint from the current directory'"
+
+  # --- VERIFY TIER ---
+
+  # Scenario 4: C# / .NET project
+  - id: tc-04
+    tier: verify
+    description: ".NET project — detects csproj, uses dotnet format"
+    input: |
+      /lint
+      Target: Services/UserService.cs
+
+      Project context — MyApp.csproj exists. dotnet CLI is available.
+
+      File contents for Services/UserService.cs:
+      ```csharp
+      using System;
+      using System.Collections.Generic;
+      using System.IO;
+      using System.Linq;
+      using System.Threading.Tasks;
+
+      namespace MyApp.Services
+      {
+          public class UserService
+          {
+              private string connString;
+
+              public UserService(string connectionString)
+              {
+                  connString = connectionString;
+              }
+
+              public async Task<object> GetUser(int id)
+              {
+                  try {
+                      // TODO: implement
+                      return null;
+                  }
+                  catch (Exception ex) {
+                      return null;
+                  }
+              }
+
+              public void ProcessUsers(List<object> users) {
+                  for (int i = 0; i < users.Count; i++) {
+                      var u = users[i];
+                      Console.WriteLine(u.ToString());
+                  }
+              }
+          }
+      }
+      ```
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output identifies the project as C# / .NET"
+        - "Output references dotnet format or dotnet build warnings"
+      quality:
+        - "The swallowed exception (catch returning null) is identified as a high-priority issue"
+        - "Unused imports (System.IO, System.Linq, System.Threading.Tasks) are flagged"
+        - "The method returning Task<object> instead of a specific type is noted"
+      instruction_adherence:
+        - "The swallowed exception is categorized as 'fix immediately'"
+        - "The report structure matches the skill's reporting requirements"
+
+  # Scenario 5: Rust project with clippy
+  - id: tc-05
+    tier: verify
+    description: "Rust project — detects Cargo.toml, uses cargo clippy"
+    input: |
+      /lint
+      Target: src/main.rs
+
+      Project context — Cargo.toml exists. cargo and clippy are installed.
+
+      File contents for src/main.rs:
+      ```rust
+      use std::collections::HashMap;
+      use std::fs;
+      use std::io;
+
+      fn process(data: &Vec<String>) -> Vec<String> {
+          let mut results: Vec<String> = Vec::new();
+          for i in 0..data.len() {
+              let item = &data[i];
+              if item.len() > 0 {
+                  let mut s = String::new();
+                  s = s + &item.to_uppercase();
+                  results.push(s);
+              }
+          }
+          return results;
+      }
+
+      fn main() {
+          let x = vec!["hello".to_string(), "".to_string(), "world".to_string()];
+          let r = process(&x);
+          println!("{:?}", r);
+      }
+      ```
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output identifies the project as Rust"
+        - "Output references cargo clippy and/or cargo fmt"
+      quality:
+        - "Taking &Vec<String> instead of &[String] is flagged (clippy::ptr_arg)"
+        - "Using index-based loop instead of iterator is noted"
+        - "Unused imports (fs, io) are identified"
+        - "The explicit return statement is flagged as unnecessary"
+      instruction_adherence:
+        - "The skill checks that clippy is installed before running"
+        - "Issues are categorized by the priority levels from the skill spec"
+
+  # Scenario 6: Missing linter — should suggest installation
+  - id: tc-06
+    tier: verify
+    description: "Linter not installed — skill reports and suggests install command"
+    input: |
+      /lint
+      Target: src/app.go
+
+      Project context — go.mod exists. golangci-lint is NOT installed (command not found).
+
+      File contents for src/app.go:
+      ```go
+      package main
+
+      import (
+          "fmt"
+          "os"
+          "strings"
+      )
+
+      func main() {
+          x := os.Args
+          if len(x) > 1 {
+              fmt.Println(strings.ToUpper(x[1]))
+          }
+      }
+      ```
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output identifies the project as Go"
+      quality:
+        - "The skill reports that golangci-lint is not installed"
+        - "An install command for golangci-lint is suggested"
+        - "The skill still attempts to use go vet as a fallback"
+      instruction_adherence:
+        - "The skill follows step 2: check what's installed before running"
+        - "The skill does NOT fabricate linter output for a tool that isn't available"
+
+# Scoring notes:
+# - All assertions use LLM-as-judge with binary yes/no framing
+# - Categories: format (structural), quality (substance), instruction_adherence (rules)
+# - Tiers: smoke (fast signal), verify (regression check on promising mutations)

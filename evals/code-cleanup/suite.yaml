@@ -1,0 +1,257 @@
+# Eval Suite: code-cleanup
+# Tests whether the skill produces correct refactoring output: issue identification,
+# incremental changes, behavior preservation, and clear reporting.
+#
+# Tiers:
+#   smoke  — run every iteration for fast signal (3 cases)
+#   verify — run only when smoke improves (3-4 cases)
+
+skill: code-cleanup
+created_at: "2026-04-29T04:00:00Z"
+model: sonnet
+iterations: 10
+timeout_per_iteration_minutes: 10
+
+test_cases:
+  # --- SMOKE TIER ---
+
+  # Scenario 1: Dead code and naming issues — core happy path
+  - id: tc-01
+    tier: smoke
+    description: "Python function with dead code, bad names, and magic numbers"
+    input: |
+      /code-cleanup
+      Target: src/utils/processor.py
+
+      File contents:
+      ```python
+      def proc(d, x=None):
+          tmp = []
+          unused_list = []
+          result = 0
+          for item in d:
+              if item['type'] == 1:
+                  result += item['val'] * 1.08
+              elif item['type'] == 2:
+                  result += item['val'] * 1.15
+              else:
+                  result += item['val']
+          if x is not None:
+              result = result - x
+          return result
+      ```
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output contains a list or categorization of identified issues"
+        - "Output contains the refactored code"
+      quality:
+        - "Dead code (unused_list, tmp) is identified as an issue"
+        - "Magic numbers (1.08, 1.15) are identified as an issue"
+        - "Poor naming (proc, d, x, val) is identified as an issue"
+        - "The refactored code removes or addresses the dead code"
+        - "The refactored code replaces magic numbers with named constants or parameters"
+      instruction_adherence:
+        - "Issues are categorized by severity (high/medium/low)"
+        - "The skill presents findings before making changes"
+        - "The refactored code preserves the original behavior (same inputs produce same outputs)"
+
+  # Scenario 2: Deeply nested conditionals — complexity reduction
+  - id: tc-02
+    tier: smoke
+    description: "JavaScript function with deep nesting and duplicated logic"
+    input: |
+      /code-cleanup
+      Target: src/services/validator.ts
+
+      File contents:
+      ```typescript
+      function validateUser(user: any, settings: any) {
+        if (user) {
+          if (user.email) {
+            if (user.email.includes('@')) {
+              if (settings) {
+                if (settings.requireVerified) {
+                  if (user.verified) {
+                    return { valid: true, user: user };
+                  } else {
+                    return { valid: false, error: 'User not verified' };
+                  }
+                } else {
+                  return { valid: true, user: user };
+                }
+              } else {
+                return { valid: true, user: user };
+              }
+            } else {
+              return { valid: false, error: 'Invalid email' };
+            }
+          } else {
+            return { valid: false, error: 'Email required' };
+          }
+        } else {
+          return { valid: false, error: 'User required' };
+        }
+      }
+      ```
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output identifies the deep nesting as an issue"
+        - "Output contains refactored code"
+      quality:
+        - "Deep nesting (>3 levels) is identified as a medium or high severity issue"
+        - "The refactored version uses early returns or guard clauses to reduce nesting"
+        - "The refactored code is functionally equivalent to the original"
+      instruction_adherence:
+        - "The skill reads and analyzes the code before suggesting changes"
+        - "Changes are incremental and behavior-preserving"
+
+  # Scenario 3: No target specified — skill must ask
+  - id: tc-03
+    tier: smoke
+    description: "No target provided — skill should ask what to clean up"
+    input: |
+      /code-cleanup
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output asks the user what code to clean up"
+      quality:
+        - "The skill does NOT attempt to refactor without a target"
+        - "The prompt to the user is helpful (suggests file, directory, or symbol)"
+      instruction_adherence:
+        - "The skill follows the $ARGUMENTS pattern: 'if not provided, ask user'"
+
+  # --- VERIFY TIER ---
+
+  # Scenario 4: Already clean code — skill should say so
+  - id: tc-04
+    tier: verify
+    description: "Well-written code with no significant issues"
+    input: |
+      /code-cleanup
+      Target: src/utils/format.ts
+
+      File contents:
+      ```typescript
+      export function formatCurrency(amount: number, currency = 'USD'): string {
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(amount);
+      }
+      ```
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output acknowledges the code quality"
+      quality:
+        - "The skill does NOT make unnecessary changes for the sake of changing something"
+        - "If minor suggestions are made, they are clearly labeled as optional/low-severity"
+      instruction_adherence:
+        - "The skill still performs the analysis step before concluding"
+
+  # Scenario 5: Error handling issues — swallowed errors
+  - id: tc-05
+    tier: verify
+    description: "Code with swallowed errors and missing error handling"
+    input: |
+      /code-cleanup
+      Target: src/services/api-client.ts
+
+      File contents:
+      ```typescript
+      async function fetchData(url: string) {
+        try {
+          const resp = await fetch(url);
+          const data = await resp.json();
+          return data;
+        } catch (e) {
+          // TODO: handle error
+          return null;
+        }
+      }
+
+      async function saveData(url: string, payload: any) {
+        try {
+          await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
+        } catch (e) {}
+      }
+      ```
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output identifies the swallowed errors as issues"
+      quality:
+        - "Empty catch block in saveData is identified as high severity"
+        - "The TODO comment catch in fetchData is identified as an issue"
+        - "The refactored code adds proper error handling or re-throws"
+        - "Missing response status check (resp.ok) is noted"
+      instruction_adherence:
+        - "Swallowed errors are categorized as high severity per the workflow"
+        - "The skill proposes specific fixes, not just identifies the problems"
+
+  # Scenario 6: Cross-file duplication hint
+  - id: tc-06
+    tier: verify
+    description: "Code with duplicated validation logic that could be extracted"
+    input: |
+      /code-cleanup
+      Target: src/routes/api/
+
+      File contents for users.ts:
+      ```typescript
+      function handleCreateUser(req: Request) {
+        if (!req.body.email || !req.body.email.includes('@')) {
+          return { status: 400, error: 'Invalid email' };
+        }
+        if (!req.body.name || req.body.name.length < 2) {
+          return { status: 400, error: 'Name too short' };
+        }
+        // ... create user
+      }
+      ```
+
+      File contents for invites.ts:
+      ```typescript
+      function handleCreateInvite(req: Request) {
+        if (!req.body.email || !req.body.email.includes('@')) {
+          return { status: 400, error: 'Invalid email' };
+        }
+        if (!req.body.name || req.body.name.length < 2) {
+          return { status: 400, error: 'Name too short' };
+        }
+        // ... create invite
+      }
+      ```
+    context:
+      project: heathdev-observatory
+      constraints: []
+    assertions:
+      format:
+        - "Output identifies duplicated logic across the two files"
+      quality:
+        - "The duplicated email and name validation is identified"
+        - "The skill suggests extracting shared validation into a reusable function"
+        - "The suggested extraction preserves the original validation behavior"
+      instruction_adherence:
+        - "Duplicated logic is categorized as high severity per the workflow"
+
+# Scoring notes:
+# - [deterministic] assertions are checked by string/regex matching, no LLM needed
+# - All other assertions use LLM-as-judge with binary yes/no framing
+# - Categories: format (structural), quality (substance), instruction_adherence (rules)
+# - Tiers: smoke (fast signal), verify (regression check on promising mutations)

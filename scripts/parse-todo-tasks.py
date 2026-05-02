@@ -4,7 +4,6 @@
 import os
 import re
 import sys
-from typing import Dict
 
 # Compile regex pattern once for performance
 # Only match tasks with NO indentation (true top-level)
@@ -18,7 +17,7 @@ SECTION_IDEAS = 'ideas'
 SECTION_COMPLETED = 'completed'
 
 
-def count_tasks(filename: str, max_size: int = 102400) -> Dict[str, int]:
+def count_tasks(filename: str, max_size: int = 102400) -> dict[str, int]:
     """Parse TODO.md and count tasks by section.
 
     Only counts top-level checkboxes (no indentation before dash).
@@ -150,15 +149,6 @@ def main() -> int:
         return 1
     except Exception as e:
         print(f"ERROR: Unexpected error: {e}", file=sys.stderr)
-        return 2
-
-    # Validate output format
-    required_keys = [
-        SECTION_ACTIVE, SECTION_BLOCKED, SECTION_IN_PROGRESS,
-        SECTION_IDEAS, SECTION_COMPLETED
-    ]
-    if not all(key in results for key in required_keys):
-        print("ERROR: Internal error - missing result keys", file=sys.stderr)
         return 2
 
     # Print results in pipe-separated format (stdout only)

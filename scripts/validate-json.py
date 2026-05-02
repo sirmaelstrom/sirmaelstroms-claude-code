@@ -1,107 +1,41 @@
 #!/usr/bin/env python3
+"""Validate required fields in JSON plugin manifest files."""
+
 import sys
 import json
 from pathlib import Path
 
-def validate_plugin_json(file_path):
-    """Validate plugin.json structure."""
-    errors = []
 
+def validate_json_required_fields(file_path: Path, required_fields: list[str]) -> list[str]:
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
     except json.JSONDecodeError as e:
-        errors.append(f"JSON parse error: {e}")
-        return errors
+        return [f"JSON parse error: {e}"]
 
-    # Required fields
-    required_fields = ['name', 'version', 'description', 'author', 'commands', 'agents']
-    for field in required_fields:
-        if field not in data:
-            errors.append(f"Missing required field: {field}")
+    return [f"Missing required field: {field}" for field in required_fields if field not in data]
 
-    # Validate commands
-    if 'commands' in data:
-        for i, cmd in enumerate(data['commands']):
-            if 'name' not in cmd:
-                errors.append(f"Command {i}: missing name")
-            if 'path' not in cmd:
-                errors.append(f"Command {i}: missing path")
-            elif not Path(cmd['path']).exists():
-                errors.append(f"Command {i}: path does not exist: {cmd['path']}")
-            if 'description' not in cmd:
-                errors.append(f"Command {i}: missing description")
 
-    # Validate agents
-    if 'agents' in data:
-        for i, agent in enumerate(data['agents']):
-            if 'name' not in agent:
-                errors.append(f"Agent {i}: missing name")
-            if 'path' not in agent:
-                errors.append(f"Agent {i}: missing path")
-            elif not Path(agent['path']).exists():
-                errors.append(f"Agent {i}: path does not exist: {agent['path']}")
-            if 'description' not in agent:
-                errors.append(f"Agent {i}: missing description")
-
-    return errors
-
-def validate_marketplace_json(file_path):
-    """Validate marketplace.json structure."""
-    errors = []
-
-    try:
-        with open(file_path, 'r') as f:
-            data = json.load(f)
-    except json.JSONDecodeError as e:
-        errors.append(f"JSON parse error: {e}")
-        return errors
-
-    # Required fields
-    required_fields = ['marketplaceName', 'plugins']
-    for field in required_fields:
-        if field not in data:
-            errors.append(f"Missing required field: {field}")
-
-    return errors
-
-def main():
+def main() -> None:
     results = {}
 
-    # Validate plugin.json
-    plugin_json = Path('.claude-plugin/plugin.json')
-    if plugin_json.exists():
-        errors = validate_plugin_json(plugin_json)
-        results[str(plugin_json)] = {
-            'valid': len(errors) == 0,
-            'errors': errors
-        }
-    else:
-        results[str(plugin_json)] = {
-            'valid': False,
-            'errors': ['File does not exist']
-        }
+    targets = {
+        '.claude-plugin/plugin.json': ['name', 'version', 'description', 'author'],
+        '.claude-plugin/marketplace.json': ['plugins'],
+    }
 
-    # Validate marketplace.json
-    marketplace_json = Path('.claude-plugin/marketplace.json')
-    if marketplace_json.exists():
-        errors = validate_marketplace_json(marketplace_json)
-        results[str(marketplace_json)] = {
-            'valid': len(errors) == 0,
-            'errors': errors
-        }
-    else:
-        results[str(marketplace_json)] = {
-            'valid': False,
-            'errors': ['File does not exist']
-        }
+    for path_str, required_fields in targets.items():
+        path = Path(path_str)
+        if path.exists():
+            errors = validate_json_required_fields(path, required_fields)
+        else:
+            errors = ['File does not exist']
+        results[path_str] = {'valid': len(errors) == 0, 'errors': errors}
 
-    # Write results
     Path('validation-reports').mkdir(exist_ok=True)
-    with open('validation-reports/json-validation.json', 'w') as f:
+    with open('validation-reports/json-validation.json', 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2)
 
-    # Print summary
     total = len(results)
     valid = sum(1 for r in results.values() if r['valid'])
     print(f"JSON files validated: {valid}/{total} passed")
@@ -114,6 +48,7 @@ def main():
                 for error in result['errors']:
                     print(f"  - {error}")
         sys.exit(1)
+
 
 if __name__ == '__main__':
     main()

@@ -1,3 +1,6 @@
+You are a Claude Code agent with the following skill loaded:
+
+<skill>
 ---
 name: code-explain
 description: "Explain code structure, logic, and patterns at the requested depth. Use when the user asks to explain code, understand a function, walk through logic, or analyze complexity. Adapts detail level to what's asked."
@@ -29,13 +32,16 @@ Scale sections to the depth requested — **do not use all sections for every qu
 | "Walk me through this" | Overview → Breakdown; add Diagram only if flow is non-trivial |
 | "How does this work?" | All sections as relevant |
 
-Section definitions:
+Section definitions — render each as a `##` heading in your response:
 - **Overview** — What the code does and what problem it solves
 - **Diagram** — Mermaid flowchart, sequence, or class diagram (omit for simple code)
 - **Breakdown** — Walk through components, explaining the non-obvious parts
 - **Complexity** — Cyclomatic complexity, Big O, cognitive complexity
 - **Patterns** — Design patterns used, anti-patterns present, architectural style
 - **Concerns** — Potential bugs, edge cases, performance issues, security risks
+
+Minimal example structure for a "Walk me through this" response:
+
 
 ## Principles
 
@@ -44,3 +50,16 @@ Section definitions:
 - **Use concrete examples** — Show execution with sample data for algorithms
 - **Explain "why"** — Design decisions and trade-offs matter more than mechanics
 - **Match the audience** — Adjust terminology to the user's apparent experience level
+
+</skill>
+
+The user has invoked the skill with this input:
+
+/code-explain
+
+Project context: heathdev-observatory
+
+
+Execute the skill fully. Produce the complete output as specified in the skill's output schema.
+Do NOT ask clarifying questions — use your best judgment and the context provided.
+Simulate any commands you would run and produce realistic output.

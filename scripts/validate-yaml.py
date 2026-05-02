@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
+"""Validate YAML frontmatter in command and agent markdown files."""
 import sys
 import yaml
 import json
 from pathlib import Path
 
 # Module-level constants
-VALID_MODELS = ['claude-sonnet-4-5-20250929', 'claude-sonnet-4-5', 'sonnet']
+VALID_MODELS = ['sonnet', 'opus', 'haiku']
 VALID_COLORS = ['red', 'blue', 'green', 'yellow', 'orange', 'purple', 'cyan', 'teal', 'pink']
 
-def extract_and_parse_frontmatter(file_path):
-    """Extract and parse YAML frontmatter. Returns (frontmatter_dict, errors_list)."""
-    errors = []
 
-    with open(file_path, 'r') as f:
+def extract_and_parse_frontmatter(file_path: Path) -> tuple[dict[str, object] | None, list[str]]:
+    errors: list[str] = []
+
+    with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
 
     if not content.startswith('---'):
@@ -32,46 +33,38 @@ def extract_and_parse_frontmatter(file_path):
 
     return frontmatter, errors
 
-def validate_command_yaml(file_path):
-    """Validate YAML frontmatter in command file."""
+
+def missing_fields(frontmatter: dict[str, object], required: list[str]) -> list[str]:
+    return [f"Missing required field: {field}" for field in required if field not in frontmatter]
+
+
+def validate_command_yaml(file_path: Path) -> list[str]:
     frontmatter, errors = extract_and_parse_frontmatter(file_path)
-    if errors:
+    if errors or frontmatter is None:
         return errors
 
-    # Check required fields
-    if 'description' not in frontmatter:
-        errors.append("Missing required field: description")
-
-    # Validate model if present
+    errors += missing_fields(frontmatter, ['description'])
     if 'model' in frontmatter and frontmatter['model'] not in VALID_MODELS:
         errors.append(f"Invalid model: {frontmatter['model']}")
 
     return errors
 
-def validate_agent_yaml(file_path):
-    """Validate YAML frontmatter in agent file."""
+
+def validate_agent_yaml(file_path: Path) -> list[str]:
     frontmatter, errors = extract_and_parse_frontmatter(file_path)
-    if errors:
+    if errors or frontmatter is None:
         return errors
 
-    # Check required fields
-    required_fields = ['name', 'description', 'model']
-    for field in required_fields:
-        if field not in frontmatter:
-            errors.append(f"Missing required field: {field}")
-
-    # Validate model value
+    errors += missing_fields(frontmatter, ['name', 'description', 'model'])
     if 'model' in frontmatter and frontmatter['model'] not in VALID_MODELS:
         errors.append(f"Invalid model: {frontmatter['model']}")
-
-    # Validate color if present
     if 'color' in frontmatter and frontmatter['color'] not in VALID_COLORS:
         errors.append(f"Invalid color: {frontmatter['color']}")
 
     return errors
 
-def main():
-    # Validate commands
+
+def main() -> None:
     commands_dir = Path('commands')
     command_results = {}
 
@@ -82,7 +75,6 @@ def main():
             'errors': errors
         }
 
-    # Validate agents
     agents_dir = Path('agents')
     agent_results = {}
 
@@ -93,14 +85,12 @@ def main():
             'errors': errors
         }
 
-    # Write results
     Path('validation-reports').mkdir(exist_ok=True)
-    with open('validation-reports/commands-validation.json', 'w') as f:
+    with open('validation-reports/commands-validation.json', 'w', encoding='utf-8') as f:
         json.dump(command_results, f, indent=2)
-    with open('validation-reports/agents-validation.json', 'w') as f:
+    with open('validation-reports/agents-validation.json', 'w', encoding='utf-8') as f:
         json.dump(agent_results, f, indent=2)
 
-    # Print summary
     total_commands = len(command_results)
     valid_commands = sum(1 for r in command_results.values() if r['valid'])
     total_agents = len(agent_results)
@@ -109,7 +99,6 @@ def main():
     print(f"Commands validated: {valid_commands}/{total_commands} passed")
     print(f"Agents validated: {valid_agents}/{total_agents} passed")
 
-    # Print errors
     all_valid = (valid_commands == total_commands and valid_agents == total_agents)
     if not all_valid:
         print("\nErrors found:")
@@ -119,6 +108,7 @@ def main():
                 for error in result['errors']:
                     print(f"  - {error}")
         sys.exit(1)
+
 
 if __name__ == '__main__':
     main()
